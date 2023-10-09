@@ -3,7 +3,6 @@ package com.ejo.uiphysics.elements;
 import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.scene.elements.shape.IShape;
 import com.ejo.glowlib.math.Vector;
-import com.ejo.glowui.scene.elements.shape.physics.PhysicsObjectUI;
 
 public class PhysicsDraggableUI extends PhysicsObjectUI {
 

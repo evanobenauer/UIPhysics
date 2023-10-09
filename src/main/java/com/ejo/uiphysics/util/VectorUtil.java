@@ -1,7 +1,7 @@
 package com.ejo.uiphysics.util;
 
-import com.ejo.glowui.scene.elements.shape.physics.PhysicsObjectUI;
 import com.ejo.glowlib.math.Vector;
+import com.ejo.uiphysics.elements.PhysicsObjectUI;
 
 public class VectorUtil {
 
