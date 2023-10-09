@@ -16,6 +16,8 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     protected final IShape shape;
 
     private double mass;
+    private double charge;
+
     private Vector velocity;
     private Vector acceleration;
     private Vector netForce;
@@ -29,7 +31,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
 
     private boolean disabled;
 
-    public PhysicsObjectUI(IShape shape, double mass, Vector velocity, Vector netForce) {
+    public PhysicsObjectUI(IShape shape, double mass, double charge, Vector velocity, Vector netForce, double omega, double netTorque) {
         super(shape.getPos(), shape.shouldRender(),true);
         this.shape = shape;
         this.mass = mass;
@@ -37,11 +39,24 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         this.acceleration = Vector.NULL;
         this.netForce = netForce;
         this.spin = 0;
-        this.omega = 0;
+        this.omega = omega;
         this.alpha = 0;
-        this.netTorque = 0;
+        this.netTorque = netTorque;
+        this.charge = charge;
         this.deltaT = 1f;
         this.disabled = false;
+    }
+
+    public PhysicsObjectUI(IShape shape, double mass, Vector velocity, Vector netForce, double omega, double netTorque) {
+        this(shape,mass,0,velocity,netForce,omega,netTorque);
+    }
+
+    public PhysicsObjectUI(IShape shape, double mass, double charge, Vector velocity, Vector netForce) {
+        this(shape,mass,charge,velocity,netForce,0,0);
+    }
+
+    public PhysicsObjectUI(IShape shape, double mass, Vector velocity, Vector netForce) {
+        this(shape,mass,0,velocity,netForce,0,0);
     }
 
     @Override
@@ -51,7 +66,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
 
     @Override
     protected void tickElement(Scene scene, Vector mousePos) {
-        if (!isDisabled()) {
+        if (!isPhysicsDisabled()) {
             updateAccFromForce();
             updateKinematics();
             updateAlphaFromTorque();
@@ -108,6 +123,10 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return this.mass = mass;
     }
 
+    public void setCharge(double charge) {
+        this.charge = charge;
+    }
+
     public Vector setPos(Vector pos) {
         return shape.setPos(pos);
     }
@@ -161,6 +180,10 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return mass;
     }
 
+    public double getCharge() {
+        return charge;
+    }
+
     public Vector getPos() {
         return shape.getPos();
     }
@@ -210,7 +233,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return I;
     }
 
-    public boolean isDisabled() {
+    public boolean isPhysicsDisabled() {
         return disabled;
     }
 
