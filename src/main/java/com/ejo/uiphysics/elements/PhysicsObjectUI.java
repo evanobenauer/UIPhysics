@@ -35,14 +35,17 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         super(shape.getPos(), shape.shouldRender(),true);
         this.shape = shape;
         this.mass = mass;
+        this.charge = charge;
+
         this.velocity = velocity;
         this.acceleration = Vector.NULL;
         this.netForce = netForce;
+
         this.spin = 0;
         this.omega = omega;
         this.alpha = 0;
         this.netTorque = netTorque;
-        this.charge = charge;
+
         this.deltaT = 1f;
         this.disabled = false;
     }
@@ -82,12 +85,12 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     }
 
 
-    public void updateKinematics() {
+    private void updateKinematics() {
         setVelocity(getVelocity().getAdded(getAcceleration().getMultiplied(getDeltaT())));
         setCenter(getCenter().getAdded(getVelocity().getMultiplied(getDeltaT())));
     }
 
-    public void updateAccFromForce() {
+    private void updateAccFromForce() {
         setAcceleration(getNetForce().getMultiplied(1 / getMass()));
     }
 
@@ -119,13 +122,6 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     }
 
 
-    public double setMass(double mass) {
-        return this.mass = mass;
-    }
-
-    public void setCharge(double charge) {
-        this.charge = charge;
-    }
 
     public Vector setPos(Vector pos) {
         return shape.setPos(pos);
@@ -134,6 +130,16 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     public Vector setCenter(Vector pos) {
         return shape.setCenter(pos);
     }
+
+
+    public double setMass(double mass) {
+        return this.mass = mass;
+    }
+
+    public void setCharge(double charge) {
+        this.charge = charge;
+    }
+
 
     public Vector setVelocity(Vector velocity) {
         return this.velocity = velocity;
@@ -146,6 +152,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     public Vector setNetForce(Vector netForce) {
         return this.netForce = netForce;
     }
+
 
     public double setSpin(double spin) {
         return this.spin = spin;
@@ -163,16 +170,31 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return this.netTorque = netTorque;
     }
 
+
     public double setDeltaT(double deltaT) {
         return this.deltaT = deltaT;
     }
 
-    public void setDisabled(boolean disabled) {
+    public void setPhysicsDisabled(boolean disabled) {
         this.disabled = disabled;
     }
 
     public void setColor(ColorE color) {
         shape.setColor(color);
+    }
+
+
+
+    public Vector getPos() {
+        return shape.getPos();
+    }
+
+    public Vector getCenter() {
+        return shape.getCenter();
+    }
+
+    public ColorE getColor() {
+        return shape.getColor();
     }
 
 
@@ -184,13 +206,6 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return charge;
     }
 
-    public Vector getPos() {
-        return shape.getPos();
-    }
-
-    public Vector getCenter() {
-        return shape.getCenter();
-    }
 
     public Vector getVelocity() {
         return velocity;
@@ -203,6 +218,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     public Vector getNetForce() {
         return netForce;
     }
+
 
     public double getSpin() {
         return spin;
@@ -220,6 +236,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return netTorque;
     }
 
+
     public double getDeltaT() {
         return deltaT;
     }
@@ -229,16 +246,12 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         if (getShape() instanceof RegularPolygonUI poly) I = (double) 2 /5 * getMass() * Math.pow(poly.getRadius(),2);
         if (getShape() instanceof CircleUI circle) I = (double) 2 /5 * getMass() * Math.pow(circle.getRadius(),2);
         if (getShape() instanceof RectangleUI rect) I = (double) 1 /12 * getMass() * (Math.pow(rect.getSize().getX(),2) + Math.pow(rect.getSize().getY(),2));
-        //if (getShape() instanceof LineUI line) I = (double) 1/ 12 * getMass() * Math.pow(line.getLength(),2);
+        if (getShape() instanceof LineUI line) I = (double) 1/ 12 * getMass() * Math.pow(line.getLength(),2);
         return I;
     }
 
     public boolean isPhysicsDisabled() {
         return disabled;
-    }
-
-    public ColorE getColor() {
-        return shape.getColor();
     }
 
 

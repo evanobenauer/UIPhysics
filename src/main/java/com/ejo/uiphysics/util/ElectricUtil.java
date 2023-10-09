@@ -33,9 +33,9 @@ public class ElectricUtil {
         return distance.getUnitVector().getMultiplied(k * object.getCharge() / Math.pow(distance.getMagnitude(), 2));
     }
 
-    public static double calculateVoltage(double k, PhysicsObjectUI shape, Vector pos) {
-        Vector distance = VectorUtil.calculateVectorBetweenPoints(shape.getPos(),pos);
+    public static double calculateVoltage(double k, PhysicsObjectUI object, Vector location) {
+        Vector distance = VectorUtil.calculateVectorBetweenPoints(object.getPos(),location);
         if (distance.getMagnitude() == 0) return 0;
-        return k * shape.getCharge() / (distance.getMagnitude());
+        return k * object.getCharge() / (distance.getMagnitude());
     }
 }
