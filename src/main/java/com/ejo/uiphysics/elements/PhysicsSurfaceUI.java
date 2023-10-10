@@ -58,6 +58,7 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         this.physicsObjects = objects;
     }
 
+    //TODO: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small. Find a workaround for this
     private void applyHorizontalFriction(PhysicsObjectUI object) {
         if (Math.abs(object.getVelocity().getMagnitude()) < 2) object.setVelocity(Vector.NULL); //Check in case of oscillation around 0 due to deltaT not being infinitely small
         if (object.getVelocity().getX() == 0) {
