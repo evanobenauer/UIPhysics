@@ -9,8 +9,10 @@ import com.ejo.glowlib.misc.ColorE;
 /**
  * The PhysicsObject class is a container for any shape. The class uses the data from the shape and calculates kinematics to move
  * said shape anywhere on the screen.
+ * Due to UI coordinate conventions, UP is -y, DOWN is +y. This is important when calculating forces
  * NOTE: Physics objects will NOT render properly in economy mode as they do not post empty events. You MUST use standard mode to render properly
  */
+//TODO: Flip y coordinate sign to make up + and down -
 public class PhysicsObjectUI extends ElementUI implements IShape {
 
     protected final IShape shape;
