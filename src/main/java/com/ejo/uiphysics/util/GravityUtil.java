@@ -33,9 +33,9 @@ public class GravityUtil {
         return distance.getUnitVector().getMultiplied(G * object.getMass() / Math.pow(distance.getMagnitude(), 2));
     }
 
-    public static Vector calculateSurfaceGravity(PhysicsObjectUI object) {
+    public static Vector calculateSurfaceGravity(double g, PhysicsObjectUI object) {
         if (!object.isPhysicsDisabled()) {
-            return object.getNetForce().getAdded(new Vector(0, g * object.getMass()));
+            return new Vector(0, g * object.getMass());
         }
         return Vector.NULL;
     }
