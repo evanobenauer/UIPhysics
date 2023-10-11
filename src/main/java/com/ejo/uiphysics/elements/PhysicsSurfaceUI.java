@@ -43,11 +43,11 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
                     doCollisionBottom(object, ySize);
                 }
                 if (isCollidingRight(object, xSize, ySize)) {
-                    //applyVerticalFriction(object);
+                    applyVerticalFriction(object);
                     doCollisionRight(object, xSize);
                 }
                 if (isCollidingLeft(object, xSize, ySize)) {
-                    //applyVerticalFriction(object);
+                    applyVerticalFriction(object);
                     doCollisionLeft(object, xSize);
                 }
             }
