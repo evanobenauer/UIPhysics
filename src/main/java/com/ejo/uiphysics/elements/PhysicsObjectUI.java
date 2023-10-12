@@ -25,6 +25,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     private Vector netForce;
 
     public Vector prevNetForce;
+    public Vector prevPrevNetForce;
 
     public double spin;
     private double omega;
@@ -50,7 +51,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         this.alpha = 0;
         this.netTorque = netTorque;
 
-        this.deltaT = 1f;
+        this.deltaT = .1f;
         this.disabled = false;
     }
 
@@ -78,6 +79,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
             updateKinematics();
             updateAlphaFromTorque();
             updateRotationalKinematics();
+            prevPrevNetForce = prevNetForce;
             prevNetForce = getNetForce();
         } else {
             resetMovement();

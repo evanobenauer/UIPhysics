@@ -34,20 +34,21 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
             if (object.getShape() instanceof RectangleUI rect) {
                 double xSize = rect.getSize().getX();
                 double ySize = rect.getSize().getY();
+                Vector relativeForce = object.getNetForce().getSubtracted(getNetForce());
                 if (isCollidingTop(object, xSize, ySize)) {
-                    if (object.getNetForce().getY() > 0) applyHorizontalFriction(object);
+                    if (relativeForce.getY() > 0) applyHorizontalFriction(object,true);
                     doCollisionTop(object, ySize);
                 }
                 if (isCollidingBottom(object, xSize, ySize)) {
-                    if (object.getNetForce().getY() < 0) applyHorizontalFriction(object);
+                    if (relativeForce.getY() < 0) applyHorizontalFriction(object,false);
                     doCollisionBottom(object, ySize);
                 }
                 if (isCollidingRight(object, xSize, ySize)) {
-                    if (object.getNetForce().getX() < 0) applyVerticalFriction(object);
+                    if (relativeForce.getX() < 0) applyVerticalFriction(object,false);
                     doCollisionRight(object, xSize);
                 }
                 if (isCollidingLeft(object, xSize, ySize)) {
-                    if (object.getNetForce().getX() > 0) applyVerticalFriction(object);
+                    if (relativeForce.getX() > 0) applyVerticalFriction(object,false);
                     doCollisionLeft(object, xSize);
                 }
             }
@@ -58,67 +59,70 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         this.physicsObjects = objects;
     }
 
-    private void applyHorizontalFriction(PhysicsObjectUI object) {
+    private void applyHorizontalFriction(PhysicsObjectUI object, boolean doOscillationPrevention) {
         Vector relativeVelocity = object.getVelocity().getSubtracted(getVelocity());
+        Vector relativeForce = object.getNetForce().getSubtracted(getNetForce());
 
         //Static Friction
-        if (relativeVelocity.getX() == 0) {
-            if (object.getNetForce().getX() > 0) //RIGHT
-                ForceUtil.addForce(object, new Vector(object.getNetForce().getX() < staticFriction * Math.abs(object.getNetForce().getY()) ? -object.getNetForce().getX() : -kineticFriction * Math.abs(object.getNetForce().getY()), 0));
-            if (object.getNetForce().getX() < 0) //LEFT
-                ForceUtil.addForce(object, new Vector(object.getNetForce().getX() > -staticFriction * Math.abs(object.getNetForce().getY()) ? -object.getNetForce().getX() : kineticFriction * Math.abs(object.getNetForce().getY()), 0));
-            return;
+        if (Math.abs(relativeVelocity.getX()) == 0) {
+            if (Math.abs(relativeForce.getX()) < staticFriction*Math.abs(object.getNetForce().getY())) {
+                return; //If static friction passes, do NOT apply any new friction forces
+            }
         }
 
-        //Moving Right, Left Friction
-        if (relativeVelocity.getX() > 0) {
-            ForceUtil.addForce(object, new Vector(-kineticFriction * Math.abs(object.getNetForce().getY()), 0));
-        }
-        //Moving Left, Right Friction
-        if (relativeVelocity.getX() < 0) {
-            ForceUtil.addForce(object, new Vector(kineticFriction * Math.abs(object.getNetForce().getY()), 0));
+        //Kinetic Friction
+        if (Math.abs(relativeVelocity.getX()) > 0) {
+            //Moving Right, Left Friction
+            if (relativeVelocity.getX() > 0) {
+                ForceUtil.addForce(object, new Vector(-kineticFriction * Math.abs(object.getNetForce().getY()), 0));
+            }
+            //Moving Left, Right Friction
+            if (relativeVelocity.getX() < 0) {
+                ForceUtil.addForce(object, new Vector(kineticFriction * Math.abs(object.getNetForce().getY()), 0));
+            }
         }
 
-        //--------------OSCILLATION PREVENTION SYSTEM------------
-        //TODO: DeltaT oscillations break moving platform friction
-        //TODO: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small. Find a workaround for this
-        //TODO: This is mostly good, BUT the flashing on a moving platform has to stop
-        if (object.prevNetForce.getX() == -object.getNetForce().getX() && object.prevNetForce.getX() != 0) {
-            object.setVelocity(Vector.NULL);
-            object.setNetForce(object.getNetForce().getAdded(object.prevNetForce));
+        //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small. Find a workaround for this
+        //Oscillation Prevention: If the last frame of an objects force was the exact opposite to the current force, set the force to null AND set the velocity to the reference frame velocity
+        if (doOscillationPrevention) {
+            if (object.prevNetForce.getX() == -object.getNetForce().getX() && object.prevNetForce.getX() == -object.prevPrevNetForce.getX() && object.prevNetForce.getX() != 0) {
+                object.setNetForce(object.getNetForce().getAdded(object.prevNetForce));
+                object.setVelocity(getVelocity());
+            }
         }
-        //----------------------------------------------
-
     }
 
-    private void applyVerticalFriction(PhysicsObjectUI object) {
+    private void applyVerticalFriction(PhysicsObjectUI object, boolean doOscillationPrevention) {
         Vector relativeVelocity = object.getVelocity().getSubtracted(getVelocity());
+        Vector relativeForce = object.getNetForce().getSubtracted(getNetForce());
 
         //Static Friction
-        if (relativeVelocity.getY() == 0) {
-            if (object.getNetForce().getY() > 0) //RIGHT
-                ForceUtil.addForce(object, new Vector(0,object.getNetForce().getY() < staticFriction * Math.abs(object.getNetForce().getX()) ? -object.getNetForce().getY() : -kineticFriction * Math.abs(object.getNetForce().getX())));
-            if (object.getNetForce().getY() < 0) //LEFT
-                ForceUtil.addForce(object, new Vector(0,object.getNetForce().getY() > -staticFriction * Math.abs(object.getNetForce().getX()) ? -object.getNetForce().getY() : kineticFriction * Math.abs(object.getNetForce().getX())));
-            return;
+        if (Math.abs(relativeVelocity.getY()) == 0) {
+            if (Math.abs(relativeForce.getY()) < staticFriction*Math.abs(object.getNetForce().getX())) {
+                return; //If static friction passes, do NOT apply any new friction forces
+            }
         }
 
-        //Moving Right, Left Friction
-        if (relativeVelocity.getY() > 0) {
-            ForceUtil.addForce(object, new Vector(0,-kineticFriction * Math.abs(object.getNetForce().getX())));
-        }
-        //Moving Left, Right Friction
-        if (relativeVelocity.getY() < 0) {
-            ForceUtil.addForce(object, new Vector(0,kineticFriction * Math.abs(object.getNetForce().getX())));
+        //Kinetic Friction
+        if (Math.abs(relativeVelocity.getY()) > 0) {
+            //Moving Right, Left Friction
+            if (relativeVelocity.getY() > 0) {
+                ForceUtil.addForce(object, new Vector(0,-kineticFriction * Math.abs(object.getNetForce().getX())));
+            }
+            //Moving Left, Right Friction
+            if (relativeVelocity.getY() < 0) {
+                ForceUtil.addForce(object, new Vector(0,kineticFriction * Math.abs(object.getNetForce().getX())));
+            }
         }
 
-        //--------------OSCILLATION PREVENTION SYSTEM------------
-        if (object.prevNetForce.getY() == -object.getNetForce().getY() && object.prevNetForce.getY() != 0) {
-            object.setVelocity(Vector.NULL);
-            object.setNetForce(object.getNetForce().getAdded(object.prevNetForce));
+        //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small. Find a workaround for this
+        //Oscillation Prevention: If the last frame of an objects force was the exact opposite to the current force, set the force to null AND set the velocity to the reference frame velocity
+        if (doOscillationPrevention) {
+            if (object.prevNetForce.getY() == -object.getNetForce().getY() && object.prevNetForce.getY() == -object.prevPrevNetForce.getY() && object.prevNetForce.getY() != 0) {
+                object.setNetForce(object.getNetForce().getAdded(object.prevNetForce));
+                object.setVelocity(getVelocity());
+            }
         }
-        //----------------------------------------------
-
     }
 
 
