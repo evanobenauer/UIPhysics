@@ -5,6 +5,7 @@ import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.misc.ColorE;
 import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.scene.elements.shape.RectangleUI;
+import com.ejo.uiphysics.util.ForceUtil;
 import com.ejo.uiphysics.util.VectorUtil;
 
 import java.util.ArrayList;
@@ -23,7 +24,6 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         super(new RectangleUI(pos,size,color), 1, 0, Vector.NULL, Vector.NULL);
         this.staticFriction = staticFriction;
         this.kineticFriction = kineticFriction;
-        setPhysicsDisabled(true);
     }
 
     @Override
@@ -35,19 +35,19 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
                 double xSize = rect.getSize().getX();
                 double ySize = rect.getSize().getY();
                 if (isCollidingTop(object, xSize, ySize)) {
-                    applyHorizontalFriction(object);
+                    if (object.getNetForce().getY() > 0) applyHorizontalFriction(object);
                     doCollisionTop(object, ySize);
                 }
                 if (isCollidingBottom(object, xSize, ySize)) {
-                    applyHorizontalFriction(object);
+                    if (object.getNetForce().getY() < 0) applyHorizontalFriction(object);
                     doCollisionBottom(object, ySize);
                 }
                 if (isCollidingRight(object, xSize, ySize)) {
-                    applyVerticalFriction(object);
+                    if (object.getNetForce().getX() < 0) applyVerticalFriction(object);
                     doCollisionRight(object, xSize);
                 }
                 if (isCollidingLeft(object, xSize, ySize)) {
-                    applyVerticalFriction(object);
+                    if (object.getNetForce().getX() > 0) applyVerticalFriction(object);
                     doCollisionLeft(object, xSize);
                 }
             }
@@ -58,27 +58,67 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         this.physicsObjects = objects;
     }
 
-    //TODO: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small. Find a workaround for this
     private void applyHorizontalFriction(PhysicsObjectUI object) {
-        if (Math.abs(object.getVelocity().getMagnitude()) < 2) object.setVelocity(Vector.NULL); //Check in case of oscillation around 0 due to deltaT not being infinitely small
-        if (object.getVelocity().getX() == 0) {
-            if (object.getNetForce().getX() > 0) object.setNetForce(object.getNetForce().getAdded(object.getNetForce().getX() < staticFriction*Math.abs(object.getNetForce().getY()) ? -object.getNetForce().getX() : 0,0));
-            if (object.getNetForce().getX() < 0) object.setNetForce(object.getNetForce().getAdded(object.getNetForce().getX() > -staticFriction*Math.abs(object.getNetForce().getY()) ? -object.getNetForce().getX() : 0,0));
+        Vector relativeVelocity = object.getVelocity().getSubtracted(getVelocity());
+
+        //Static Friction
+        if (relativeVelocity.getX() == 0) {
+            if (object.getNetForce().getX() > 0) //RIGHT
+                ForceUtil.addForce(object, new Vector(object.getNetForce().getX() < staticFriction * Math.abs(object.getNetForce().getY()) ? -object.getNetForce().getX() : -kineticFriction * Math.abs(object.getNetForce().getY()), 0));
+            if (object.getNetForce().getX() < 0) //LEFT
+                ForceUtil.addForce(object, new Vector(object.getNetForce().getX() > -staticFriction * Math.abs(object.getNetForce().getY()) ? -object.getNetForce().getX() : kineticFriction * Math.abs(object.getNetForce().getY()), 0));
             return;
         }
-        if (object.getVelocity().getX() > 0) object.setNetForce(object.getNetForce().getAdded(-kineticFriction*Math.abs(object.getNetForce().getY()),0));
-        if (object.getVelocity().getX() < 0) object.setNetForce(object.getNetForce().getAdded(kineticFriction*Math.abs(object.getNetForce().getY()),0));
+
+        //Moving Right, Left Friction
+        if (relativeVelocity.getX() > 0) {
+            ForceUtil.addForce(object, new Vector(-kineticFriction * Math.abs(object.getNetForce().getY()), 0));
+        }
+        //Moving Left, Right Friction
+        if (relativeVelocity.getX() < 0) {
+            ForceUtil.addForce(object, new Vector(kineticFriction * Math.abs(object.getNetForce().getY()), 0));
+        }
+
+        //--------------OSCILLATION PREVENTION SYSTEM------------
+        //TODO: DeltaT oscillations break moving platform friction
+        //TODO: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small. Find a workaround for this
+        //TODO: This is mostly good, BUT the flashing on a moving platform has to stop
+        if (object.prevNetForce.getX() == -object.getNetForce().getX() && object.prevNetForce.getX() != 0) {
+            object.setVelocity(Vector.NULL);
+            object.setNetForce(object.getNetForce().getAdded(object.prevNetForce));
+        }
+        //----------------------------------------------
+
     }
 
     private void applyVerticalFriction(PhysicsObjectUI object) {
-        if (Math.abs(object.getVelocity().getMagnitude()) < 2) object.setVelocity(Vector.NULL); //Check in case of oscillation around 0 due to deltaT not being infinitely small
-        if (object.getVelocity().getY() == 0) {
-            if (object.getNetForce().getY() > 0) object.setNetForce(object.getNetForce().getAdded(0,object.getNetForce().getY() < staticFriction*Math.abs(object.getNetForce().getX()) ? -object.getNetForce().getY() : 0));
-            if (object.getNetForce().getY() < 0) object.setNetForce(object.getNetForce().getAdded(0,object.getNetForce().getY() > -staticFriction*Math.abs(object.getNetForce().getX()) ? -object.getNetForce().getY() : 0));
+        Vector relativeVelocity = object.getVelocity().getSubtracted(getVelocity());
+
+        //Static Friction
+        if (relativeVelocity.getY() == 0) {
+            if (object.getNetForce().getY() > 0) //RIGHT
+                ForceUtil.addForce(object, new Vector(0,object.getNetForce().getY() < staticFriction * Math.abs(object.getNetForce().getX()) ? -object.getNetForce().getY() : -kineticFriction * Math.abs(object.getNetForce().getX())));
+            if (object.getNetForce().getY() < 0) //LEFT
+                ForceUtil.addForce(object, new Vector(0,object.getNetForce().getY() > -staticFriction * Math.abs(object.getNetForce().getX()) ? -object.getNetForce().getY() : kineticFriction * Math.abs(object.getNetForce().getX())));
             return;
         }
-        if (object.getVelocity().getY() > 0) object.setNetForce(object.getNetForce().getAdded(0,-kineticFriction*Math.abs(object.getNetForce().getX())));
-        if (object.getVelocity().getY() < 0) object.setNetForce(object.getNetForce().getAdded(0,kineticFriction*Math.abs(object.getNetForce().getX())));
+
+        //Moving Right, Left Friction
+        if (relativeVelocity.getY() > 0) {
+            ForceUtil.addForce(object, new Vector(0,-kineticFriction * Math.abs(object.getNetForce().getX())));
+        }
+        //Moving Left, Right Friction
+        if (relativeVelocity.getY() < 0) {
+            ForceUtil.addForce(object, new Vector(0,kineticFriction * Math.abs(object.getNetForce().getX())));
+        }
+
+        //--------------OSCILLATION PREVENTION SYSTEM------------
+        if (object.prevNetForce.getY() == -object.getNetForce().getY() && object.prevNetForce.getY() != 0) {
+            object.setVelocity(Vector.NULL);
+            object.setNetForce(object.getNetForce().getAdded(object.prevNetForce));
+        }
+        //----------------------------------------------
+
     }
 
 
@@ -108,42 +148,42 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
 
 
     public boolean isCollidingTop(PhysicsObjectUI object, double xSize, double ySize) {
+        if (!isObjectInCollisionBounds(object,xSize,ySize)) return false;
         Vector dirVec = VectorUtil.calculateVectorBetweenPoints(object.getCenter(),getCenter()).getUnitVector();
         Vector dirCornerVec = VectorUtil.calculateVectorBetweenPoints(getPos(),getCenter()).getUnitVector();
         Angle cornerAngle = new Angle(Math.atan2(-dirCornerVec.getY(),dirCornerVec.getX()));
         Angle posAngle = new Angle(Math.atan2(-dirVec.getY(),dirVec.getX()));
-        if (posAngle.getDegrees() >= (180 - cornerAngle.getDegrees()) && posAngle.getDegrees() < cornerAngle.getDegrees()) return isInCollisionBounds(object,xSize,ySize);
-        return false;
+        return posAngle.getDegrees() >= (180 - cornerAngle.getDegrees()) && posAngle.getDegrees() < cornerAngle.getDegrees();
     }
 
     public boolean isCollidingBottom(PhysicsObjectUI object, double xSize, double ySize) {
+        if (!isObjectInCollisionBounds(object,xSize,ySize)) return false;
         Vector dirVec = VectorUtil.calculateVectorBetweenPoints(object.getCenter(),getCenter()).getUnitVector();
         Vector dirCornerVec = VectorUtil.calculateVectorBetweenPoints(getPos(),getCenter()).getUnitVector();
         Angle cornerAngle = new Angle(Math.atan2(-dirCornerVec.getY(),dirCornerVec.getX()));
         Angle posAngle = new Angle(Math.atan2(-dirVec.getY(),dirVec.getX()));
-        if (posAngle.getDegrees() > -cornerAngle.getDegrees() && posAngle.getDegrees() < -(180 - cornerAngle.getDegrees())) return isInCollisionBounds(object,xSize,ySize);
-        return false;
+        return posAngle.getDegrees() > -cornerAngle.getDegrees() && posAngle.getDegrees() < -(180 - cornerAngle.getDegrees());
     }
 
     public boolean isCollidingLeft(PhysicsObjectUI object, double xSize, double ySize) {
+        if (!isObjectInCollisionBounds(object,xSize,ySize)) return false;
         Vector dirVec = VectorUtil.calculateVectorBetweenPoints(object.getCenter(),getCenter()).getUnitVector();
         Vector dirCornerVec = VectorUtil.calculateVectorBetweenPoints(getPos(),getCenter()).getUnitVector();
         Angle cornerAngle = new Angle(Math.atan2(-dirCornerVec.getY(),dirCornerVec.getX()));
         Angle posAngle = new Angle(Math.atan2(-dirVec.getY(),dirVec.getX()));
-        if (Math.abs(posAngle.getDegrees()) > cornerAngle.getDegrees()) return isInCollisionBounds(object,xSize,ySize);
-        return false;
+        return Math.abs(posAngle.getDegrees()) > cornerAngle.getDegrees();
     }
 
     public boolean isCollidingRight(PhysicsObjectUI object, double xSize, double ySize) {
+        if (!isObjectInCollisionBounds(object,xSize,ySize)) return false;
         Vector dirVec = VectorUtil.calculateVectorBetweenPoints(object.getCenter(),getCenter()).getUnitVector();
         Vector dirCornerVec = VectorUtil.calculateVectorBetweenPoints(getPos(),getCenter()).getUnitVector();
         Angle cornerAngle = new Angle(Math.atan2(-dirCornerVec.getY(),dirCornerVec.getX()));
         Angle posAngle = new Angle(Math.atan2(-dirVec.getY(),dirVec.getX()));
-        if (Math.abs(posAngle.getDegrees()) < 180 - cornerAngle.getDegrees()) return isInCollisionBounds(object,xSize,ySize);
-        return false;
+        return Math.abs(posAngle.getDegrees()) < 180 - cornerAngle.getDegrees();
     }
 
-    private boolean isInCollisionBounds(PhysicsObjectUI object, double xSize, double ySize) {
+    public boolean isObjectInCollisionBounds(PhysicsObjectUI object, double xSize, double ySize) {
         boolean isXColliding = (object.getPos().getX() + xSize >= getPos().getX() && object.getPos().getX() <= getPos().getX() + getSize().getX());
         boolean isYColliding = (object.getPos().getY() + ySize >= getPos().getY() && object.getPos().getY() <= getPos().getY() + getSize().getY());
         return isXColliding && isYColliding;

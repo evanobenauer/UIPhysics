@@ -4,18 +4,31 @@ import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.scene.elements.shape.IShape;
 import com.ejo.glowlib.math.Vector;
 
+//TODO: Make draggable object set a velocity
 public class PhysicsDraggableUI extends PhysicsObjectUI {
 
     private boolean dragging;
     private Vector dragPos = Vector.NULL;
 
-    public PhysicsDraggableUI(IShape shape, double mass, Vector velocity, Vector netForce) {
-        super(shape, mass, velocity, netForce);
+    public PhysicsDraggableUI(IShape shape, double mass, double charge, Vector velocity, Vector netForce, double omega, double netTorque) {
+        super(shape,mass,charge,velocity,netForce,omega,netTorque);
         this.dragging = false;
     }
 
+    public PhysicsDraggableUI(IShape shape, double mass, Vector velocity, Vector netForce, double omega, double netTorque) {
+        this(shape,mass,0,velocity,netForce,omega,netTorque);
+    }
+
+    public PhysicsDraggableUI(IShape shape, double mass, double charge, Vector velocity, Vector netForce) {
+        this(shape,mass,charge,velocity,netForce,0,0);
+    }
+
+    public PhysicsDraggableUI(IShape shape, double mass, Vector velocity, Vector netForce) {
+        this(shape,mass,0,velocity,netForce,0,0);
+    }
+
     @Override
-    public void tickElement(Scene scene, Vector mousePos) {
+    protected void tickElement(Scene scene, Vector mousePos) {
         if (isDragging()) {
             resetMovement();
             setPos(scene.getWindow().getScaledMousePos().getAdded(dragPos.getMultiplied(-1)));

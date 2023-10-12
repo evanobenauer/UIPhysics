@@ -24,6 +24,8 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     private Vector acceleration;
     private Vector netForce;
 
+    public Vector prevNetForce;
+
     public double spin;
     private double omega;
     private double alpha;
@@ -76,6 +78,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
             updateKinematics();
             updateAlphaFromTorque();
             updateRotationalKinematics();
+            prevNetForce = getNetForce();
         } else {
             resetMovement();
         }
@@ -115,14 +118,33 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     }
 
     //TODO: Add collisions with shapes and lines here
-    public boolean isColliding(IShape object) {
-        return false;
-    }
-
+    // Rectangle code here is temporary and should be replaced with a universal shape collision detection
     public boolean isColliding(LineUI line) {
         return false;
     }
 
+    public boolean isColliding(IShape shape) {
+        if (getShape() instanceof RectangleUI rect && shape instanceof RectangleUI shapeRect) {
+            boolean isXColliding = (shape.getPos().getX() + shapeRect.getSize().getX() >= getPos().getX() && shape.getPos().getX() <= getPos().getX() + rect.getSize().getX());
+            boolean isYColliding = (shape.getPos().getY() + shapeRect.getSize().getY() >= getPos().getY() && shape.getPos().getY() <= getPos().getY() + rect.getSize().getY());
+            return isXColliding && isYColliding;
+        }
+        return false;
+    }
+
+    public boolean isColliding(PhysicsObjectUI object) {
+        if (getShape() instanceof RectangleUI rect && object.getShape() instanceof RectangleUI objRect) {
+            boolean isXColliding = (object.getPos().getX() + objRect.getSize().getX() >= getPos().getX() && object.getPos().getX() <= getPos().getX() + rect.getSize().getX());
+            boolean isYColliding = (object.getPos().getY() + objRect.getSize().getY() >= getPos().getY() && object.getPos().getY() <= getPos().getY() + rect.getSize().getY());
+            return isXColliding && isYColliding;
+        }
+        return false;
+    }
+
+    public boolean isColliding(PhysicsSurfaceUI surface) {
+        if (getShape() instanceof RectangleUI rect) return surface.isObjectInCollisionBounds(this,rect.getSize().getX(),rect.getSize().getY());
+        return false;
+    }
 
 
     public Vector setPos(Vector pos) {
@@ -147,7 +169,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return this.velocity = velocity;
     }
 
-    private Vector setAcceleration(Vector acceleration) {
+    public Vector setAcceleration(Vector acceleration) {
         return this.acceleration = acceleration;
     }
 
@@ -164,7 +186,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return this.omega = omega;
     }
 
-    private double setAlpha(double alpha) {
+    public double setAlpha(double alpha) {
         return this.alpha = alpha;
     }
 
