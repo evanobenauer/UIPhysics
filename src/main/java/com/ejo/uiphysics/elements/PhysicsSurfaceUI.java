@@ -65,24 +65,18 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
 
         //Static Friction
         if (Math.abs(relativeVelocity.getX()) == 0) {
-            if (Math.abs(relativeForce.getX()) < staticFriction*Math.abs(object.getNetForce().getY())) {
+            if (Math.abs(relativeForce.getX()) < staticFriction * Math.abs(object.getNetForce().getY())) {
                 return; //If static friction passes, do NOT apply any new friction forces
             }
         }
 
         //Kinetic Friction
-        if (Math.abs(relativeVelocity.getX()) > 0) {
-            //Moving Right, Left Friction
-            if (relativeVelocity.getX() > 0) {
-                ForceUtil.addForce(object, new Vector(-kineticFriction * Math.abs(object.getNetForce().getY()), 0));
-            }
-            //Moving Left, Right Friction
-            if (relativeVelocity.getX() < 0) {
-                ForceUtil.addForce(object, new Vector(kineticFriction * Math.abs(object.getNetForce().getY()), 0));
-            }
-        }
+        double kineticForce = kineticFriction * Math.abs(object.getNetForce().getY());
+        if (relativeVelocity.getX() > 0) kineticForce *= -1;
+        if (relativeVelocity.getX() == 0 && relativeForce.getX() > 0) kineticForce *= -1;
+        ForceUtil.addForce(object, new Vector(kineticForce, 0));
 
-        //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small. Find a workaround for this
+        //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small.
         //Oscillation Prevention: If the last frame of an objects force was the exact opposite to the current force, set the force to null AND set the velocity to the reference frame velocity
         if (doOscillationPrevention) {
             if (object.prevNetForce.getX() == -object.getNetForce().getX() && object.prevNetForce.getX() == -object.prevPrevNetForce.getX() && object.prevNetForce.getX() != 0) {
@@ -104,16 +98,10 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         }
 
         //Kinetic Friction
-        if (Math.abs(relativeVelocity.getY()) > 0) {
-            //Moving Right, Left Friction
-            if (relativeVelocity.getY() > 0) {
-                ForceUtil.addForce(object, new Vector(0,-kineticFriction * Math.abs(object.getNetForce().getX())));
-            }
-            //Moving Left, Right Friction
-            if (relativeVelocity.getY() < 0) {
-                ForceUtil.addForce(object, new Vector(0,kineticFriction * Math.abs(object.getNetForce().getX())));
-            }
-        }
+        double kineticForce = kineticFriction * Math.abs(object.getNetForce().getX());
+        if (relativeVelocity.getY() > 0) kineticForce *= -1;
+        if (relativeVelocity.getY() == 0 && relativeForce.getY() > 0) kineticForce *= -1;
+        ForceUtil.addForce(object, new Vector(0,kineticForce));
 
         //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small. Find a workaround for this
         //Oscillation Prevention: If the last frame of an objects force was the exact opposite to the current force, set the force to null AND set the velocity to the reference frame velocity
