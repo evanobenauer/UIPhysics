@@ -12,7 +12,6 @@ import com.ejo.glowlib.misc.ColorE;
  * Due to UI coordinate conventions, UP is -y, DOWN is +y. This is important when calculating forces
  * NOTE: Physics objects will NOT render properly in economy mode as they do not post empty events. You MUST use standard mode to render properly
  */
-//TODO: Flip y coordinate sign to make up + and down -
 public class PhysicsObjectUI extends ElementUI implements IShape {
 
     protected final IShape shape;

@@ -63,15 +63,16 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         Vector relativeVelocity = object.getVelocity().getSubtracted(getVelocity());
         Vector relativeForce = object.getNetForce().getSubtracted(getNetForce());
 
-        //Static Friction
+        //Static Friction //TODO: This is not perfect, but it works alright
         if (Math.abs(relativeVelocity.getX()) == 0) {
-            if (Math.abs(relativeForce.getX()) < staticFriction * Math.abs(object.getNetForce().getY())) {
+            if (Math.abs(relativeForce.getX()) < staticFriction * Math.abs(relativeForce.getY())) {
+                object.setNetForce(new Vector(getNetForce().getX(),relativeForce.getY())); //MAYBE set the net force to 0, but it may not be necessary
                 return; //If static friction passes, do NOT apply any new friction forces
             }
         }
 
         //Kinetic Friction
-        double kineticForce = kineticFriction * Math.abs(object.getNetForce().getY());
+        double kineticForce = kineticFriction * Math.abs(relativeForce.getY());
         if (relativeVelocity.getX() > 0) kineticForce *= -1;
         if (relativeVelocity.getX() == 0 && relativeForce.getX() > 0) kineticForce *= -1;
         ForceUtil.addForce(object, new Vector(kineticForce, 0));
@@ -92,13 +93,14 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
 
         //Static Friction
         if (Math.abs(relativeVelocity.getY()) == 0) {
-            if (Math.abs(relativeForce.getY()) < staticFriction*Math.abs(object.getNetForce().getX())) {
+            if (Math.abs(relativeForce.getY()) < staticFriction*Math.abs(relativeForce.getX())) {
+                object.setNetForce(new Vector(relativeForce.getX(),getNetForce().getY())); //MAYBE set the net force to 0, but it may not be necessary
                 return; //If static friction passes, do NOT apply any new friction forces
             }
         }
 
         //Kinetic Friction
-        double kineticForce = kineticFriction * Math.abs(object.getNetForce().getX());
+        double kineticForce = kineticFriction * Math.abs(relativeForce.getX());
         if (relativeVelocity.getY() > 0) kineticForce *= -1;
         if (relativeVelocity.getY() == 0 && relativeForce.getY() > 0) kineticForce *= -1;
         ForceUtil.addForce(object, new Vector(0,kineticForce));
@@ -116,25 +118,25 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
 
     private void doCollisionTop(PhysicsObjectUI object, double ySize) {
         if (object.getNetForce().getY() > 0) object.setNetForce(object.getNetForce().getAdded(0,-object.getNetForce().getY()));
-        object.setVelocity(new Vector(object.getVelocity().getX(),object.getVelocity().getY() > 0 ? 0 : object.getVelocity().getY()));
+        object.setVelocity(new Vector(object.getVelocity().getX(),object.getVelocity().getY() > 0 ? getVelocity().getY() : object.getVelocity().getY()));
         object.setPos(new Vector(object.getPos().getX(),getPos().getY() - ySize));
     }
 
     private void doCollisionBottom(PhysicsObjectUI object, double ySize) {
         if (object.getNetForce().getY() < 0) object.setNetForce(object.getNetForce().getAdded(0,-object.getNetForce().getY()));
-        object.setVelocity(new Vector(object.getVelocity().getX(),object.getVelocity().getY() < 0 ? 0 : object.getVelocity().getY()));
+        object.setVelocity(new Vector(object.getVelocity().getX(),object.getVelocity().getY() < 0 ? getVelocity().getY() : object.getVelocity().getY()));
         object.setPos(new Vector(object.getPos().getX(),getPos().getY() + getSize().getY()));
     }
 
     private void doCollisionLeft(PhysicsObjectUI object, double xSize) {
         if (object.getNetForce().getX() > 0) object.setNetForce(object.getNetForce().getAdded(-object.getNetForce().getX(),0));
-        object.setVelocity(new Vector(object.getVelocity().getX() > 0 ? 0 : object.getVelocity().getX(),object.getVelocity().getY()));
+        object.setVelocity(new Vector(object.getVelocity().getX() > 0 ? getVelocity().getX() : object.getVelocity().getX(),object.getVelocity().getY()));
         object.setPos(new Vector(getPos().getX() - xSize,object.getPos().getY()));
     }
 
     private void doCollisionRight(PhysicsObjectUI object, double xSize) {
         if (object.getNetForce().getX() < 0) object.setNetForce(object.getNetForce().getAdded(-object.getNetForce().getX(),0));
-        object.setVelocity(new Vector(object.getVelocity().getX() < 0 ? 0 : object.getVelocity().getX(),object.getVelocity().getY()));
+        object.setVelocity(new Vector(object.getVelocity().getX() < 0 ? getVelocity().getX() : object.getVelocity().getX(),object.getVelocity().getY()));
         object.setPos(new Vector(getPos().getX() + getSize().getX(),object.getPos().getY()));
     }
 
@@ -145,7 +147,7 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         Vector dirCornerVec = VectorUtil.calculateVectorBetweenPoints(getPos(),getCenter()).getUnitVector();
         Angle cornerAngle = new Angle(Math.atan2(-dirCornerVec.getY(),dirCornerVec.getX()));
         Angle posAngle = new Angle(Math.atan2(-dirVec.getY(),dirVec.getX()));
-        return posAngle.getDegrees() >= (180 - cornerAngle.getDegrees()) && posAngle.getDegrees() < cornerAngle.getDegrees();
+        return posAngle.getDegrees() > (180 - cornerAngle.getDegrees()) && posAngle.getDegrees() < cornerAngle.getDegrees();
     }
 
     public boolean isCollidingBottom(PhysicsObjectUI object, double xSize, double ySize) {
