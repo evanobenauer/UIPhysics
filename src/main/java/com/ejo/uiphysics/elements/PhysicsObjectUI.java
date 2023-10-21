@@ -1,5 +1,6 @@
 package com.ejo.uiphysics.elements;
 
+import com.ejo.glowlib.util.NumberUtil;
 import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.scene.elements.ElementUI;
 import com.ejo.glowui.scene.elements.shape.*;
@@ -35,7 +36,8 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     private double deltaT;
 
     private boolean disabled;
-    private double debugForceScale;
+    private double debugVectorForceScale;
+    private double debugVectorCap;
 
     public PhysicsObjectUI(IShape shape, double mass, double charge, Vector velocity, Vector netForce, double omega, double netTorque) {
         super(shape.getPos(), shape.shouldRender(),true);
@@ -54,7 +56,8 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
 
         this.deltaT = .1f;
         this.disabled = false;
-        this.debugForceScale = 1;
+        this.debugVectorForceScale = 1;
+        this.debugVectorCap = 100;
     }
 
     public PhysicsObjectUI(IShape shape, double mass, Vector velocity, Vector netForce, double omega, double netTorque) {
@@ -76,13 +79,13 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
             if (isPhysicsDisabled()) return;
             //Force
             if (getNetForce().getMagnitude() != 0) {
-                LineUI lineUI = new LineUI(getCenter(), VectorUtil.getUIAngleFromVector(getNetForce()), getNetForce().getMagnitude() * debugForceScale, ColorE.BLUE, LineUI.Type.PLAIN, 4);
+                LineUI lineUI = new LineUI(getCenter(), VectorUtil.getUIAngleFromVector(getNetForce()), NumberUtil.getBoundValue(getNetForce().getMagnitude() * getDebugVectorForceScale(),0,getDebugVectorCap()).doubleValue(), ColorE.BLUE, LineUI.Type.PLAIN, 4);
                 lineUI.draw();
             }
 
             //Velocity
             if (getVelocity().getMagnitude() != 0) {
-                LineUI lineUI2 = new LineUI(getCenter(), VectorUtil.getUIAngleFromVector(getVelocity()), getVelocity().getMagnitude(), ColorE.RED, LineUI.Type.PLAIN, 2);
+                LineUI lineUI2 = new LineUI(getCenter(), VectorUtil.getUIAngleFromVector(getVelocity()), NumberUtil.getBoundValue(getVelocity().getMagnitude(),0,getDebugVectorCap()).doubleValue(), ColorE.RED, LineUI.Type.PLAIN, 2);
                 lineUI2.draw();
             }
         }
@@ -221,8 +224,12 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         this.disabled = disabled;
     }
 
-    public void setDebugForceScale(double debugForceScale) {
-        this.debugForceScale = debugForceScale;
+    public void setDebugVectorForceScale(double debugVectorForceScale) {
+        this.debugVectorForceScale = debugVectorForceScale;
+    }
+
+    public void setDebugVectorCap(double debugVectorCap) {
+        this.debugVectorCap = debugVectorCap;
     }
 
     public void setColor(ColorE color) {
@@ -300,10 +307,13 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return disabled;
     }
 
-    public double getDebugForceScale() {
-        return debugForceScale;
+    public double getDebugVectorForceScale() {
+        return debugVectorForceScale;
     }
 
+    public double getDebugVectorCap() {
+        return debugVectorCap;
+    }
 
     public IShape getShape() {
         return shape;
