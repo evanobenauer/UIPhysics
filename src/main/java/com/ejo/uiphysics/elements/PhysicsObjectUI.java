@@ -5,6 +5,7 @@ import com.ejo.glowui.scene.elements.ElementUI;
 import com.ejo.glowui.scene.elements.shape.*;
 import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.misc.ColorE;
+import com.ejo.uiphysics.util.VectorUtil;
 
 /**
  * The PhysicsObject class is a container for any shape. The class uses the data from the shape and calculates kinematics to move
@@ -34,6 +35,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     private double deltaT;
 
     private boolean disabled;
+    private double debugForceScale;
 
     public PhysicsObjectUI(IShape shape, double mass, double charge, Vector velocity, Vector netForce, double omega, double netTorque) {
         super(shape.getPos(), shape.shouldRender(),true);
@@ -52,6 +54,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
 
         this.deltaT = .1f;
         this.disabled = false;
+        this.debugForceScale = 1;
     }
 
     public PhysicsObjectUI(IShape shape, double mass, Vector velocity, Vector netForce, double omega, double netTorque) {
@@ -69,6 +72,20 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     @Override
     protected void drawElement(Scene scene, Vector mousePos) {
         shape.draw(scene, mousePos);
+        if (scene.getWindow().isDebug()) {
+            if (isPhysicsDisabled()) return;
+            //Force
+            if (getNetForce().getMagnitude() != 0) {
+                LineUI lineUI = new LineUI(getCenter(), VectorUtil.getUIAngleFromVector(getNetForce()), getNetForce().getMagnitude() * debugForceScale, ColorE.BLUE, LineUI.Type.PLAIN, 4);
+                lineUI.draw();
+            }
+
+            //Velocity
+            if (getVelocity().getMagnitude() != 0) {
+                LineUI lineUI2 = new LineUI(getCenter(), VectorUtil.getUIAngleFromVector(getVelocity()), getVelocity().getMagnitude(), ColorE.RED, LineUI.Type.PLAIN, 2);
+                lineUI2.draw();
+            }
+        }
     }
 
     @Override
@@ -204,6 +221,10 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         this.disabled = disabled;
     }
 
+    public void setDebugForceScale(double debugForceScale) {
+        this.debugForceScale = debugForceScale;
+    }
+
     public void setColor(ColorE color) {
         shape.setColor(color);
     }
@@ -277,6 +298,10 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
 
     public boolean isPhysicsDisabled() {
         return disabled;
+    }
+
+    public double getDebugForceScale() {
+        return debugForceScale;
     }
 
 
