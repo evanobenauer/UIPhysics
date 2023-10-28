@@ -33,9 +33,12 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     private double alpha;
     private double netTorque;
 
+    private boolean tickNetRecalculation;
+
     private double deltaT;
 
-    private boolean disabled;
+    private boolean physicsDisabled;
+
     private double debugVectorForceScale;
     private double debugVectorCap;
 
@@ -54,8 +57,10 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         this.alpha = 0;
         this.netTorque = netTorque;
 
+        this.tickNetRecalculation = false;
+
         this.deltaT = .1f;
-        this.disabled = false;
+        this.physicsDisabled = false;
         this.debugVectorForceScale = 1;
         this.debugVectorCap = 100;
     }
@@ -78,8 +83,9 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         if (scene.getWindow().isDebug()) {
             if (isPhysicsDisabled()) return;
             //Force
-            if (getNetForce().getMagnitude() != 0) {
-                LineUI lineUI = new LineUI(getCenter(), VectorUtil.getUIAngleFromVector(getNetForce()), NumberUtil.getBoundValue(getNetForce().getMagnitude() * getDebugVectorForceScale(),0,getDebugVectorCap()).doubleValue(), ColorE.BLUE, LineUI.Type.PLAIN, 4);
+            Vector netForce = doTickNetRecalculation() ? prevNetForce : getNetForce();
+            if (netForce.getMagnitude() != 0) {
+                LineUI lineUI = new LineUI(getCenter(), VectorUtil.getUIAngleFromVector(netForce), NumberUtil.getBoundValue(netForce.getMagnitude() * getDebugVectorForceScale(),0,getDebugVectorCap()).doubleValue(), ColorE.BLUE, LineUI.Type.PLAIN, 4);
                 lineUI.draw();
             }
 
@@ -100,6 +106,10 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
             updateRotationalKinematics();
             prevPrevNetForce = prevNetForce;
             prevNetForce = getNetForce();
+            if (doTickNetRecalculation()) {
+                setNetForce(Vector.NULL);
+                setNetTorque(0);
+            }
         } else {
             resetMovement();
         }
@@ -215,13 +225,16 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return this.netTorque = netTorque;
     }
 
+    public void setTickNetRecalculation(boolean tickNetRecalculation) {
+        this.tickNetRecalculation = tickNetRecalculation;
+    }
 
     public double setDeltaT(double deltaT) {
         return this.deltaT = deltaT;
     }
 
     public void setPhysicsDisabled(boolean disabled) {
-        this.disabled = disabled;
+        this.physicsDisabled = disabled;
     }
 
     public void setDebugVectorForceScale(double debugVectorForceScale) {
@@ -289,6 +302,9 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return netTorque;
     }
 
+    public boolean doTickNetRecalculation() {
+        return tickNetRecalculation;
+    }
 
     public double getDeltaT() {
         return deltaT;
@@ -304,7 +320,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     }
 
     public boolean isPhysicsDisabled() {
-        return disabled;
+        return physicsDisabled;
     }
 
     public double getDebugVectorForceScale() {

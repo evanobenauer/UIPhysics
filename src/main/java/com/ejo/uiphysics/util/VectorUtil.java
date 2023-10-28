@@ -7,11 +7,11 @@ import com.ejo.uiphysics.elements.PhysicsObjectUI;
 public class VectorUtil {
 
     public static Vector calculateVectorBetweenObjects(PhysicsObjectUI object1, PhysicsObjectUI object2) {
-        return object1.getCenter().getAdded(object2.getCenter().getMultiplied(-1));
+        return object1.getCenter().getSubtracted(object2.getCenter());
     }
 
     public static Vector calculateVectorBetweenPoints(Vector point1, Vector point2) {
-        return point1.getAdded(point2.getMultiplied(-1));
+        return point1.getSubtracted(point2);
     }
 
     /**
