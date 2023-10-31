@@ -208,6 +208,10 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         return this.netForce = netForce;
     }
 
+    public Vector addForce(Vector force) {
+        return setNetForce(getNetForce().getAdded(force));
+    }
+
 
     public double setSpin(double spin) {
         return this.spin = spin;
@@ -224,6 +228,11 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     public double setNetTorque(double netTorque) {
         return this.netTorque = netTorque;
     }
+
+    public double addTorque(double torque) {
+        return setNetTorque(getNetTorque() + torque);
+    }
+
 
     public void setTickNetRecalculation(boolean tickNetRecalculation) {
         this.tickNetRecalculation = tickNetRecalculation;
