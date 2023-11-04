@@ -1,6 +1,7 @@
 package com.ejo.uiphysics.elements;
 
 import com.ejo.glowlib.math.Angle;
+import com.ejo.glowlib.math.MathE;
 import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.misc.ColorE;
 import com.ejo.glowui.scene.Scene;
@@ -36,19 +37,19 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
                 double ySize = rect.getSize().getY();
                 Vector relativeForce = object.getNetForce().getSubtracted(getNetForce());
                 if (isCollidingTop(object, xSize, ySize)) {
-                    if (relativeForce.getY() > 0) applyHorizontalFriction(object,true);
+                    if (relativeForce.getY() > 0) applyFriction(object,FrictionType.HORIZONTAL,true);
                     doCollisionTop(object, ySize);
                 }
                 if (isCollidingBottom(object, xSize, ySize)) {
-                    if (relativeForce.getY() < 0) applyHorizontalFriction(object,false);
+                    if (relativeForce.getY() < 0) applyFriction(object,FrictionType.HORIZONTAL,true);
                     doCollisionBottom(object, ySize);
                 }
                 if (isCollidingRight(object, xSize, ySize)) {
-                    if (relativeForce.getX() < 0) applyVerticalFriction(object,false);
+                    if (relativeForce.getX() < 0) applyFriction(object,FrictionType.VERTICAL,false);
                     doCollisionRight(object, xSize);
                 }
                 if (isCollidingLeft(object, xSize, ySize)) {
-                    if (relativeForce.getX() > 0) applyVerticalFriction(object,false);
+                    if (relativeForce.getX() > 0) applyFriction(object,FrictionType.VERTICAL,false);
                     doCollisionLeft(object, xSize);
                 }
             }
@@ -59,60 +60,54 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         this.physicsObjects = objects;
     }
 
-    private void applyHorizontalFriction(PhysicsObjectUI object, boolean doOscillationPrevention) {
-        Vector relativeVelocity = object.getVelocity().getSubtracted(getVelocity());
-        Vector relativeForce = object.getNetForce().getSubtracted(getNetForce());
-
-        //Static Friction //TODO: This is not perfect, but it works alright
-        if (Math.abs(relativeVelocity.getX()) == 0) {
-            if (Math.abs(relativeForce.getX()) < staticFriction * Math.abs(relativeForce.getY())) {
-                object.setNetForce(new Vector(getNetForce().getX(),relativeForce.getY())); //MAYBE set the net force to 0, but it may not be necessary
-                return; //If static friction passes, do NOT apply any new friction forces
-            }
-        }
-
-        //Kinetic Friction
-        double kineticForce = kineticFriction * Math.abs(relativeForce.getY());
-        if (relativeVelocity.getX() > 0) kineticForce *= -1;
-        if (relativeVelocity.getX() == 0 && relativeForce.getX() > 0) kineticForce *= -1;
-        ForceUtil.addForce(object, new Vector(kineticForce, 0));
-
-        //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small.
-        //Oscillation Prevention: If the last frame of an objects force was the exact opposite to the current force, set the force to null AND set the velocity to the reference frame velocity
-        if (doOscillationPrevention) {
-            //if ((object.getNetForce().getX() > 0 && object.prevNetForce.getX() < 0 && object.prevPrevNetForce.getX() > 0) || (object.getNetForce().getX() < 0 && object.prevNetForce.getX() > 0 && object.prevPrevNetForce.getX() < 0) && object.prevNetForce.getX() != 0) {
-            if (object.prevNetForce.getX() == -object.getNetForce().getX() && object.prevNetForce.getX() == -object.prevPrevNetForce.getX() && object.prevNetForce.getX() != 0) {
-                object.addForce(object.prevNetForce);
-                object.setVelocity(getVelocity());
-            }
-        }
+    enum FrictionType {
+        HORIZONTAL,
+        VERTICAL
     }
 
-    private void applyVerticalFriction(PhysicsObjectUI object, boolean doOscillationPrevention) {
+    private void applyFriction(PhysicsObjectUI object, FrictionType type, boolean doOscillationPrevention) {
         Vector relativeVelocity = object.getVelocity().getSubtracted(getVelocity());
         Vector relativeForce = object.getNetForce().getSubtracted(getNetForce());
 
-        //Static Friction
-        if (Math.abs(relativeVelocity.getY()) == 0) {
-            if (Math.abs(relativeForce.getY()) < staticFriction*Math.abs(relativeForce.getX())) {
-                object.setNetForce(new Vector(relativeForce.getX(),getNetForce().getY())); //MAYBE set the net force to 0, but it may not be necessary
+        Angle platformAngle = switch (type) {
+            case HORIZONTAL -> new Angle(0,true);
+            case VERTICAL -> new Angle(90,true);
+        };
+
+        Vector relativeVelocityParallel = platformAngle.getUnitVector().getMultiplied(relativeVelocity.getDot(platformAngle.getUnitVector())); // The 'X' component relative to the platform
+        Vector relativeForceParallel = platformAngle.getUnitVector().getMultiplied(relativeForce.getDot(platformAngle.getUnitVector())); // The 'X' component relative to the platform
+        Vector relativeForcePerpendicular = relativeForce.getSubtracted(relativeForceParallel); // The 'Y' component relative to the platform
+
+        double parallelVelocityComponentSign = MathE.roundDouble(relativeVelocityParallel.getTheta().getDegrees(),0) == MathE.roundDouble(platformAngle.getDegrees(),0) ? 1 : -1;
+        double parallelForceComponentSign = MathE.roundDouble(relativeForceParallel.getTheta().getDegrees(),0) == MathE.roundDouble(platformAngle.getDegrees(),0) ? 1 : -1;
+        double perpendicularForceComponentSign = MathE.roundDouble(relativeForcePerpendicular.getTheta().getDegrees(),0) == MathE.roundDouble(platformAngle.getDegrees(),0) ? 1 : -1;
+
+        double parallelVelocityComponent = parallelVelocityComponentSign * relativeVelocityParallel.getMagnitude();
+        double parallelForceComponent = parallelForceComponentSign * relativeForceParallel.getMagnitude(); //Pushing Force
+        double perpendicularForceComponent = perpendicularForceComponentSign * relativeForcePerpendicular.getMagnitude(); //Normal Force
+
+        //Static Friction -- UNFINISHED, but works alright
+        if (Math.abs(parallelVelocityComponent) == 0) {
+            if (Math.abs(parallelForceComponent) < staticFriction * Math.abs(perpendicularForceComponent)) {
                 return; //If static friction passes, do NOT apply any new friction forces
             }
         }
 
         //Kinetic Friction
-        double kineticForce = kineticFriction * Math.abs(relativeForce.getX());
-        if (relativeVelocity.getY() > 0) kineticForce *= -1;
-        if (relativeVelocity.getY() == 0 && relativeForce.getY() > 0) kineticForce *= -1;
-        ForceUtil.addForce(object, new Vector(0,kineticForce));
+        double kineticForce = kineticFriction * Math.abs(perpendicularForceComponent);
+        if (parallelVelocityComponent > 0) kineticForce *= -1;
+        if (parallelVelocityComponent == 0 && parallelForceComponent > 0) kineticForce *= -1;
+        object.addForce(platformAngle.getUnitVector().getMultiplied(kineticForce));
 
-        //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small. Find a workaround for this
+
+        //TODO: Oscillation prevention is currently only coded for cardinal direction oscillations, not rotated platforms
+        //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small.
         //Oscillation Prevention: If the last frame of an objects force was the exact opposite to the current force, set the force to null AND set the velocity to the reference frame velocity
-        if (doOscillationPrevention) {
-            //if ((object.getNetForce().getY() > 0 && object.prevNetForce.getY() < 0 && object.prevPrevNetForce.getY() > 0) || (object.getNetForce().getY() < 0 && object.prevNetForce.getY() > 0 && object.prevPrevNetForce.getY() < 0) && object.prevNetForce.getY() != 0) {
-            if (object.prevNetForce.getY() == -object.getNetForce().getY() && object.prevNetForce.getY() == -object.prevPrevNetForce.getY() && object.prevNetForce.getY() != 0) {
+        if (doOscillationPrevention) { //TODO: This currently does not work for accelerating platforms
+            if ((object.prevNetForce.getX() == -object.getNetForce().getX() && object.prevNetForce.getX() == -object.prevPrevNetForce.getX() && object.prevNetForce.getX() != 0)
+            || (object.prevNetForce.getY() == -object.getNetForce().getY() && object.prevNetForce.getY() == -object.prevPrevNetForce.getY() && object.prevNetForce.getY() != 0)) {
                 object.addForce(object.prevNetForce);
-                object.setVelocity(getVelocity());
+                object.setVelocity(getVelocity()); //Sets the objects velocity to the platforms velocity
             }
         }
     }
