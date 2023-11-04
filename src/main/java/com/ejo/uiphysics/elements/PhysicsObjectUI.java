@@ -139,13 +139,14 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         setAlpha(getNetTorque() / getMomentOfInertia());
     }
 
-    public void resetMovement() {
+    public PhysicsObjectUI resetMovement() {
         setNetForce(Vector.NULL);
         setAcceleration(Vector.NULL);
         setVelocity(Vector.NULL);
         setNetTorque(0);
         setAlpha(0);
         setOmega(0);
+        return this;
     }
 
     //TODO: Add collisions with shapes and lines here
@@ -187,49 +188,57 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     }
 
 
-    public double setMass(double mass) {
-        return this.mass = mass;
+    public PhysicsObjectUI setMass(double mass) {
+        this.mass = mass;
+        return this;
     }
 
-    public void setCharge(double charge) {
+    public PhysicsObjectUI setCharge(double charge) {
         this.charge = charge;
+        return this;
     }
 
 
-    public Vector setVelocity(Vector velocity) {
-        return this.velocity = velocity;
+    public PhysicsObjectUI setVelocity(Vector velocity) {
+        this.velocity = velocity;
+        return this;
     }
 
     public Vector setAcceleration(Vector acceleration) {
         return this.acceleration = acceleration;
     }
 
-    public Vector setNetForce(Vector netForce) {
-        return this.netForce = netForce;
+    public PhysicsObjectUI setNetForce(Vector netForce) {
+        this.netForce = netForce;
+        return this;
     }
 
-    public Vector addForce(Vector force) {
+    public PhysicsObjectUI addForce(Vector force) {
         return setNetForce(getNetForce().getAdded(force));
     }
 
 
-    public double setSpin(double spin) {
-        return this.spin = spin;
+    public PhysicsObjectUI setSpin(double spin) {
+        this.spin = spin;
+        return this;
     }
 
-    public double setOmega(double omega) {
-        return this.omega = omega;
+    public PhysicsObjectUI setOmega(double omega) {
+        this.omega = omega;
+        return this;
     }
 
-    public double setAlpha(double alpha) {
-        return this.alpha = alpha;
+    public PhysicsObjectUI setAlpha(double alpha) {
+        this.alpha = alpha;
+        return this;
     }
 
-    public double setNetTorque(double netTorque) {
-        return this.netTorque = netTorque;
+    public PhysicsObjectUI setNetTorque(double netTorque) {
+        this.netTorque = netTorque;
+        return this;
     }
 
-    public double addTorque(double torque) {
+    public PhysicsObjectUI addTorque(double torque) {
         return setNetTorque(getNetTorque() + torque);
     }
 
@@ -238,12 +247,14 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         this.tickNetRecalculation = tickNetRecalculation;
     }
 
-    public double setDeltaT(double deltaT) {
-        return this.deltaT = deltaT;
+    public PhysicsObjectUI setDeltaT(double deltaT) {
+        this.deltaT = deltaT;
+        return this;
     }
 
-    public void setPhysicsDisabled(boolean disabled) {
+    public PhysicsObjectUI setPhysicsDisabled(boolean disabled) {
         this.physicsDisabled = disabled;
+        return this;
     }
 
     public void setDebugVectorForceScale(double debugVectorForceScale) {

@@ -82,7 +82,7 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         if (doOscillationPrevention) {
             //if ((object.getNetForce().getX() > 0 && object.prevNetForce.getX() < 0 && object.prevPrevNetForce.getX() > 0) || (object.getNetForce().getX() < 0 && object.prevNetForce.getX() > 0 && object.prevPrevNetForce.getX() < 0) && object.prevNetForce.getX() != 0) {
             if (object.prevNetForce.getX() == -object.getNetForce().getX() && object.prevNetForce.getX() == -object.prevPrevNetForce.getX() && object.prevNetForce.getX() != 0) {
-                object.setNetForce(object.getNetForce().getAdded(object.prevNetForce));
+                object.addForce(object.prevNetForce);
                 object.setVelocity(getVelocity());
             }
         }
@@ -111,32 +111,32 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         if (doOscillationPrevention) {
             //if ((object.getNetForce().getY() > 0 && object.prevNetForce.getY() < 0 && object.prevPrevNetForce.getY() > 0) || (object.getNetForce().getY() < 0 && object.prevNetForce.getY() > 0 && object.prevPrevNetForce.getY() < 0) && object.prevNetForce.getY() != 0) {
             if (object.prevNetForce.getY() == -object.getNetForce().getY() && object.prevNetForce.getY() == -object.prevPrevNetForce.getY() && object.prevNetForce.getY() != 0) {
-                object.setNetForce(object.getNetForce().getAdded(object.prevNetForce));
+                object.addForce(object.prevNetForce);
                 object.setVelocity(getVelocity());
             }
         }
     }
 
     private void doCollisionTop(PhysicsObjectUI object, double ySize) {
-        if (object.getNetForce().getY() > 0) object.setNetForce(object.getNetForce().getAdded(0,-object.getNetForce().getY()));
+        if (object.getNetForce().getY() > 0) object.addForce(new Vector(0,-object.getNetForce().getY()));
         object.setVelocity(new Vector(object.getVelocity().getX(),object.getVelocity().getY() > 0 ? getVelocity().getY() : object.getVelocity().getY()));
         object.setPos(new Vector(object.getPos().getX(),getPos().getY() - ySize));
     }
 
     private void doCollisionBottom(PhysicsObjectUI object, double ySize) {
-        if (object.getNetForce().getY() < 0) object.setNetForce(object.getNetForce().getAdded(0,-object.getNetForce().getY()));
+        if (object.getNetForce().getY() < 0) object.addForce(new Vector(0,-object.getNetForce().getY()));
         object.setVelocity(new Vector(object.getVelocity().getX(),object.getVelocity().getY() < 0 ? getVelocity().getY() : object.getVelocity().getY()));
         object.setPos(new Vector(object.getPos().getX(),getPos().getY() + getSize().getY()));
     }
 
     private void doCollisionLeft(PhysicsObjectUI object, double xSize) {
-        if (object.getNetForce().getX() > 0) object.setNetForce(object.getNetForce().getAdded(-object.getNetForce().getX(),0));
+        if (object.getNetForce().getX() > 0) object.addForce(new Vector(-object.getNetForce().getX(),0));
         object.setVelocity(new Vector(object.getVelocity().getX() > 0 ? getVelocity().getX() : object.getVelocity().getX(),object.getVelocity().getY()));
         object.setPos(new Vector(getPos().getX() - xSize,object.getPos().getY()));
     }
 
     private void doCollisionRight(PhysicsObjectUI object, double xSize) {
-        if (object.getNetForce().getX() < 0) object.setNetForce(object.getNetForce().getAdded(-object.getNetForce().getX(),0));
+        if (object.getNetForce().getX() < 0) object.addForce(new Vector(-object.getNetForce().getX(),0));
         object.setVelocity(new Vector(object.getVelocity().getX() < 0 ? getVelocity().getX() : object.getVelocity().getX(),object.getVelocity().getY()));
         object.setPos(new Vector(getPos().getX() + getSize().getX(),object.getPos().getY()));
     }

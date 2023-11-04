@@ -11,6 +11,8 @@ public class ElectricUtil {
     public static double epsilon0 = Math.pow(8.854187817,-12);
     public static double k = 1 / (4 * Math.PI * epsilon0);
 
+
+    //TODO: This causes likes to attract and differents to repel
     public static <T extends PhysicsObjectUI> Vector calculateElectricForce(PhysicsObjectUI object, ArrayList<T> physicsObjects, double k) {
         if (object.isPhysicsDisabled()) return Vector.NULL;
 
@@ -19,7 +21,7 @@ public class ElectricUtil {
         //Calculate the force on obj from every other object in the list
         for (PhysicsObjectUI otherObject : physicsObjects) {
             if (!object.equals(otherObject) && !otherObject.isPhysicsDisabled()) {
-                Vector electricForceFromOtherObject = calculateElectricField(k,otherObject,object.getCenter()).getMultiplied(object.getCharge());
+                Vector electricForceFromOtherObject = calculateElectricField(k,object,otherObject.getCenter()).getMultiplied(otherObject.getCharge()).getMultiplied(-1);
                 if (!(String.valueOf(electricForceFromOtherObject.getMagnitude())).equals("NaN"))
                     electricForce.add(electricForceFromOtherObject);
             }
