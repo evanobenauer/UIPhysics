@@ -6,7 +6,6 @@ import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.misc.ColorE;
 import com.ejo.glowui.scene.Scene;
 import com.ejo.glowui.scene.elements.shape.RectangleUI;
-import com.ejo.uiphysics.util.ForceUtil;
 import com.ejo.uiphysics.util.VectorUtil;
 
 import java.util.ArrayList;
@@ -60,7 +59,7 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         this.physicsObjects = objects;
     }
 
-    enum FrictionType {
+    private enum FrictionType {
         HORIZONTAL,
         VERTICAL
     }
@@ -69,7 +68,7 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         Vector relativeVelocity = object.getVelocity().getSubtracted(getVelocity());
         Vector relativeForce = object.getNetForce().getSubtracted(getNetForce());
 
-        Angle platformAngle = switch (type) {
+        Angle platformAngle = switch (type) { //TODO: Replace parameter with an angle parameter for future angled surfaces
             case HORIZONTAL -> new Angle(0,true);
             case VERTICAL -> new Angle(90,true);
         };
@@ -99,11 +98,13 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         if (parallelVelocityComponent == 0 && parallelForceComponent > 0) kineticForce *= -1;
         object.addForce(platformAngle.getUnitVector().getMultiplied(kineticForce));
 
+        // -----------------------------------------------------------------------------------------------
 
         //TODO: Oscillation prevention is currently only coded for cardinal direction oscillations, not rotated platforms
+        //TODO: This currently does not work for accelerating platforms
         //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small.
         //Oscillation Prevention: If the last frame of an objects force was the exact opposite to the current force, set the force to null AND set the velocity to the reference frame velocity
-        if (doOscillationPrevention) { //TODO: This currently does not work for accelerating platforms
+        if (doOscillationPrevention) {
             if ((object.prevNetForce.getX() == -object.getNetForce().getX() && object.prevNetForce.getX() == -object.prevPrevNetForce.getX() && object.prevNetForce.getX() != 0)
             || (object.prevNetForce.getY() == -object.getNetForce().getY() && object.prevNetForce.getY() == -object.prevPrevNetForce.getY() && object.prevNetForce.getY() != 0)) {
                 object.addForce(object.prevNetForce);
@@ -135,8 +136,6 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         object.setVelocity(new Vector(object.getVelocity().getX() < 0 ? getVelocity().getX() : object.getVelocity().getX(),object.getVelocity().getY()));
         object.setPos(new Vector(getPos().getX() + getSize().getX(),object.getPos().getY()));
     }
-
-    //TODO: MAYBE HAVE COLLISION DETECTION BASED OFF OF VELOCITY INCIDENT ANGLE
 
     public boolean isCollidingTop(PhysicsObjectUI object, double xSize, double ySize) {
         if (!isObjectInCollisionBounds(object,xSize,ySize)) return false;
@@ -181,12 +180,14 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
     }
 
 
-    public void setStaticFriction(double staticFriction) {
+    public PhysicsSurfaceUI setStaticFriction(double staticFriction) {
         this.staticFriction = staticFriction;
+        return this;
     }
 
-    public void setKineticFriction(double kineticFriction) {
+    public PhysicsSurfaceUI setKineticFriction(double kineticFriction) {
         this.kineticFriction = kineticFriction;
+        return this;
     }
 
 
