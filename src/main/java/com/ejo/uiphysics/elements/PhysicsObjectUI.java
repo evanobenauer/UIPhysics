@@ -142,14 +142,13 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         setAlpha(getNetTorque() / getMomentOfInertia());
     }
 
-    public PhysicsObjectUI resetMovement() {
+    public void resetMovement() {
         setNetForce(Vector.NULL);
         setAcceleration(Vector.NULL);
         setVelocity(Vector.NULL);
         setNetTorque(0);
         setAlpha(0);
         setOmega(0);
-        return this;
     }
 
     //TODO: Add collisions with shapes and lines here

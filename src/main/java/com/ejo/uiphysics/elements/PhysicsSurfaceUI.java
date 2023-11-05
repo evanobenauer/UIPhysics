@@ -36,19 +36,19 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
                 double ySize = rect.getSize().getY();
                 Vector relativeForce = object.getNetForce().getSubtracted(getNetForce());
                 if (isCollidingTop(object, xSize, ySize)) {
-                    if (relativeForce.getY() > 0) applyFriction(object,FrictionType.HORIZONTAL,true);
+                    if (relativeForce.getY() > 0) applyFriction(object,new Angle(0,true),true);
                     doCollisionTop(object, ySize);
                 }
                 if (isCollidingBottom(object, xSize, ySize)) {
-                    if (relativeForce.getY() < 0) applyFriction(object,FrictionType.HORIZONTAL,true);
+                    if (relativeForce.getY() < 0) applyFriction(object,new Angle(0,true),true);
                     doCollisionBottom(object, ySize);
                 }
                 if (isCollidingRight(object, xSize, ySize)) {
-                    if (relativeForce.getX() < 0) applyFriction(object,FrictionType.VERTICAL,false);
+                    if (relativeForce.getX() < 0) applyFriction(object,new Angle(90,true),false);
                     doCollisionRight(object, xSize);
                 }
                 if (isCollidingLeft(object, xSize, ySize)) {
-                    if (relativeForce.getX() > 0) applyFriction(object,FrictionType.VERTICAL,false);
+                    if (relativeForce.getX() > 0) applyFriction(object,new Angle(90,true),false);
                     doCollisionLeft(object, xSize);
                 }
             }
@@ -59,19 +59,10 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         this.physicsObjects = objects;
     }
 
-    private enum FrictionType {
-        HORIZONTAL,
-        VERTICAL
-    }
 
-    private void applyFriction(PhysicsObjectUI object, FrictionType type, boolean doOscillationPrevention) {
+    private void applyFriction(PhysicsObjectUI object, Angle platformAngle, boolean doOscillationPrevention) {
         Vector relativeVelocity = object.getVelocity().getSubtracted(getVelocity());
         Vector relativeForce = object.getNetForce().getSubtracted(getNetForce());
-
-        Angle platformAngle = switch (type) { //TODO: Replace parameter with an angle parameter for future angled surfaces
-            case HORIZONTAL -> new Angle(0,true);
-            case VERTICAL -> new Angle(90,true);
-        };
 
         Vector relativeVelocityParallel = platformAngle.getUnitVector().getMultiplied(relativeVelocity.getDot(platformAngle.getUnitVector())); // The 'X' component relative to the platform
         Vector relativeForceParallel = platformAngle.getUnitVector().getMultiplied(relativeForce.getDot(platformAngle.getUnitVector())); // The 'X' component relative to the platform
@@ -98,8 +89,8 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         if (parallelVelocityComponent == 0 && parallelForceComponent > 0) kineticForce *= -1;
         object.addForce(platformAngle.getUnitVector().getMultiplied(kineticForce));
 
-        // -----------------------------------------------------------------------------------------------
 
+        // -----------------------------------------------------------------------------------------------
         //TODO: Oscillation prevention is currently only coded for cardinal direction oscillations, not rotated platforms
         //TODO: This currently does not work for accelerating platforms
         //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small.
