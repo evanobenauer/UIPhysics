@@ -152,46 +152,6 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         setOmega(0);
     }
 
-    public boolean isColliding(IShape shape) {
-        if (getShape() instanceof RectangleUI rectangle && shape instanceof RectangleUI shapeRect) {
-            boolean isXColliding = (shape.getPos().getX() + shapeRect.getSize().getX() >= getPos().getX() && shape.getPos().getX() <= getPos().getX() + rectangle.getSize().getX());
-            boolean isYColliding = (shape.getPos().getY() + shapeRect.getSize().getY() >= getPos().getY() && shape.getPos().getY() <= getPos().getY() + rectangle.getSize().getY());
-            return isXColliding && isYColliding;
-        }
-
-        //TODO: These don't work perfectly....
-        if (getShape() instanceof CircleUI circle && shape instanceof PolygonUI polygon) {
-            for (Vector vertex: polygon.getVertices()) {
-                if (vertex.getAdded(polygon.getPos()).getSubtracted(circle.getCenter()).getMagnitude() < circle.getRadius())
-                    return true;
-            }
-        }
-
-        if (getShape() instanceof PolygonUI polygon && shape instanceof CircleUI circle) {
-            for (Vector vertex: polygon.getVertices()) {
-                if (vertex.getAdded(polygon.getPos()).getSubtracted(circle.getCenter()).getMagnitude() < circle.getRadius())
-                    return true;
-            }
-        }
-
-        if (getShape() instanceof LineUI && shape instanceof CircleUI circle) {
-
-        }
-
-        if (getShape() instanceof CircleUI && shape instanceof CircleUI circle) {
-
-        }
-        //TODO: Use SAT detection
-        if (getShape() instanceof PolygonUI polygon && shape instanceof PolygonUI otherPolygon) {
-        }
-
-        return false;
-    }
-
-    public boolean isColliding(PhysicsObjectUI object) {
-        return isColliding(object.getShape());
-    }
-
     //Combines the colliding objects into 1 new object
     public void doInelasticCollision() {
 
@@ -200,6 +160,53 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     //Keeps separate objects with pushback collision code
     public void doElasticCollision() {
 
+    }
+    
+    public boolean isColliding(IShape shape) {
+        //COMPLETE
+        if (getShape() instanceof RectangleUI rectangle && shape instanceof RectangleUI shapeRect) {
+            boolean isXColliding = (shape.getPos().getX() + shapeRect.getSize().getX() >= getPos().getX() && shape.getPos().getX() <= getPos().getX() + rectangle.getSize().getX());
+            boolean isYColliding = (shape.getPos().getY() + shapeRect.getSize().getY() >= getPos().getY() && shape.getPos().getY() <= getPos().getY() + rectangle.getSize().getY());
+            return isXColliding && isYColliding;
+        }
+
+        //COMPLETE
+        if (getShape() instanceof CircleUI circle && shape instanceof CircleUI otherCircle) {
+            double objectDistance = circle.getCenter().getSubtracted(otherCircle.getCenter()).getMagnitude();
+            return objectDistance <= circle.getRadius() + otherCircle.getRadius();
+        }
+
+        //INCOMPLETE
+        if (getShape() instanceof CircleUI circle && shape instanceof PolygonUI polygon) {
+            for (Vector vertex: polygon.getVertices()) {
+                if (vertex.getAdded(polygon.getPos()).getSubtracted(circle.getCenter()).getMagnitude() < circle.getRadius())
+                    return true;
+            }
+        }
+
+        //INCOMPLETE
+        if (getShape() instanceof PolygonUI polygon && shape instanceof CircleUI circle) {
+            for (Vector vertex: polygon.getVertices()) {
+                if (vertex.getAdded(polygon.getPos()).getSubtracted(circle.getCenter()).getMagnitude() < circle.getRadius())
+                    return true;
+            }
+        }
+
+        //INCOMPLETE
+        if (getShape() instanceof LineUI && shape instanceof CircleUI circle) {
+
+        }
+
+        //TODO: Use SAT detection
+        //INCOMPLETE
+        if (getShape() instanceof PolygonUI polygon && shape instanceof PolygonUI otherPolygon) {
+        }
+
+        return false;
+    }
+
+    public boolean isColliding(PhysicsObjectUI object) {
+        return isColliding(object.getShape());
     }
 
 

@@ -128,27 +128,19 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         object.setPos(new Vector(getPos().getX() + getSize().getX(),object.getPos().getY()));
     }
 
+    //TODO: Make collision type into angle like we had for friction
     public boolean isColliding(PhysicsObjectUI object, CollisionType type) {
         if (!object.isColliding(this)) return false;
         Vector dirVec = VectorUtil.calculateVectorBetweenPoints(object.getCenter(),getCenter()).getUnitVector();
         Vector dirCornerVec = VectorUtil.calculateVectorBetweenPoints(getPos(),getCenter()).getUnitVector();
         Angle cornerAngle = new Angle(Math.atan2(-dirCornerVec.getY(),dirCornerVec.getX()));
         Angle posAngle = new Angle(Math.atan2(-dirVec.getY(),dirVec.getX()));
-        switch (type) {
-            case TOP -> {
-                return posAngle.getDegrees() > (180 - cornerAngle.getDegrees()) && posAngle.getDegrees() < cornerAngle.getDegrees();
-            }
-            case BOTTOM -> {
-                return posAngle.getDegrees() > -cornerAngle.getDegrees() && posAngle.getDegrees() < -(180 - cornerAngle.getDegrees());
-            }
-            case LEFT -> {
-                return Math.abs(posAngle.getDegrees()) > cornerAngle.getDegrees();
-            }
-            case RIGHT -> {
-                return Math.abs(posAngle.getDegrees()) < 180 - cornerAngle.getDegrees();
-            }
-        }
-        return false;
+        return switch (type) {
+            case TOP -> posAngle.getDegrees() > (180 - cornerAngle.getDegrees()) && posAngle.getDegrees() < cornerAngle.getDegrees();
+            case BOTTOM -> posAngle.getDegrees() > -cornerAngle.getDegrees() && posAngle.getDegrees() < -(180 - cornerAngle.getDegrees());
+            case LEFT -> Math.abs(posAngle.getDegrees()) > cornerAngle.getDegrees();
+            case RIGHT -> Math.abs(posAngle.getDegrees()) < 180 - cornerAngle.getDegrees();
+        };
     }
 
     public enum CollisionType {
