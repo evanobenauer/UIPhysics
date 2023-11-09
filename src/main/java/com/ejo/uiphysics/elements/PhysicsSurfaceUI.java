@@ -20,8 +20,8 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
     private double staticFriction;
     private double kineticFriction;
 
-    public PhysicsSurfaceUI(Vector pos, Vector size, ColorE color, double staticFriction, double kineticFriction) {
-        super(new RectangleUI(pos,size,color), 1, 0, Vector.NULL, Vector.NULL);
+    public PhysicsSurfaceUI(RectangleUI rectangle, double staticFriction, double kineticFriction) {
+        super(rectangle, 1, 0, Vector.NULL, Vector.NULL);
         this.staticFriction = staticFriction;
         this.kineticFriction = kineticFriction;
     }
@@ -35,19 +35,19 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
                 double xSize = rect.getSize().getX();
                 double ySize = rect.getSize().getY();
                 Vector relativeForce = object.getNetForce().getSubtracted(getNetForce());
-                if (isCollidingTop(object, xSize, ySize)) {
+                if (isColliding(object, CollisionType.TOP)) {
                     if (relativeForce.getY() > 0) applyFriction(object,new Angle(0,true),true);
                     doCollisionTop(object, ySize);
                 }
-                if (isCollidingBottom(object, xSize, ySize)) {
+                if (isColliding(object, CollisionType.BOTTOM)) {
                     if (relativeForce.getY() < 0) applyFriction(object,new Angle(0,true),true);
                     doCollisionBottom(object, ySize);
                 }
-                if (isCollidingRight(object, xSize, ySize)) {
+                if (isColliding(object, CollisionType.RIGHT)) {
                     if (relativeForce.getX() < 0) applyFriction(object,new Angle(90,true),false);
                     doCollisionRight(object, xSize);
                 }
-                if (isCollidingLeft(object, xSize, ySize)) {
+                if (isColliding(object, CollisionType.LEFT)) {
                     if (relativeForce.getX() > 0) applyFriction(object,new Angle(90,true),false);
                     doCollisionLeft(object, xSize);
                 }
@@ -91,9 +91,9 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
 
 
         // -----------------------------------------------------------------------------------------------
-        //TODO: Oscillation prevention is currently only coded for cardinal direction oscillations, not rotated platforms
-        //TODO: This currently does not work for accelerating platforms
         //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small.
+        //NOTE: Oscillation prevention is currently only coded for cardinal direction oscillations, not rotated platforms
+        //NOTE: This currently does not work for accelerating platforms
         //Oscillation Prevention: If the last frame of an objects force was the exact opposite to the current force, set the force to null AND set the velocity to the reference frame velocity
         if (doOscillationPrevention) {
             if ((object.prevNetForce.getX() == -object.getNetForce().getX() && object.prevNetForce.getX() == -object.prevPrevNetForce.getX() && object.prevNetForce.getX() != 0)
@@ -128,48 +128,35 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         object.setPos(new Vector(getPos().getX() + getSize().getX(),object.getPos().getY()));
     }
 
-    public boolean isCollidingTop(PhysicsObjectUI object, double xSize, double ySize) {
-        if (!isObjectInCollisionBounds(object,xSize,ySize)) return false;
+    public boolean isColliding(PhysicsObjectUI object, CollisionType type) {
+        if (!object.isColliding(this)) return false;
         Vector dirVec = VectorUtil.calculateVectorBetweenPoints(object.getCenter(),getCenter()).getUnitVector();
         Vector dirCornerVec = VectorUtil.calculateVectorBetweenPoints(getPos(),getCenter()).getUnitVector();
         Angle cornerAngle = new Angle(Math.atan2(-dirCornerVec.getY(),dirCornerVec.getX()));
         Angle posAngle = new Angle(Math.atan2(-dirVec.getY(),dirVec.getX()));
-        return posAngle.getDegrees() > (180 - cornerAngle.getDegrees()) && posAngle.getDegrees() < cornerAngle.getDegrees();
+        switch (type) {
+            case TOP -> {
+                return posAngle.getDegrees() > (180 - cornerAngle.getDegrees()) && posAngle.getDegrees() < cornerAngle.getDegrees();
+            }
+            case BOTTOM -> {
+                return posAngle.getDegrees() > -cornerAngle.getDegrees() && posAngle.getDegrees() < -(180 - cornerAngle.getDegrees());
+            }
+            case LEFT -> {
+                return Math.abs(posAngle.getDegrees()) > cornerAngle.getDegrees();
+            }
+            case RIGHT -> {
+                return Math.abs(posAngle.getDegrees()) < 180 - cornerAngle.getDegrees();
+            }
+        }
+        return false;
     }
 
-    public boolean isCollidingBottom(PhysicsObjectUI object, double xSize, double ySize) {
-        if (!isObjectInCollisionBounds(object,xSize,ySize)) return false;
-        Vector dirVec = VectorUtil.calculateVectorBetweenPoints(object.getCenter(),getCenter()).getUnitVector();
-        Vector dirCornerVec = VectorUtil.calculateVectorBetweenPoints(getPos(),getCenter()).getUnitVector();
-        Angle cornerAngle = new Angle(Math.atan2(-dirCornerVec.getY(),dirCornerVec.getX()));
-        Angle posAngle = new Angle(Math.atan2(-dirVec.getY(),dirVec.getX()));
-        return posAngle.getDegrees() > -cornerAngle.getDegrees() && posAngle.getDegrees() < -(180 - cornerAngle.getDegrees());
+    public enum CollisionType {
+        TOP,
+        BOTTOM,
+        LEFT,
+        RIGHT
     }
-
-    public boolean isCollidingLeft(PhysicsObjectUI object, double xSize, double ySize) {
-        if (!isObjectInCollisionBounds(object,xSize,ySize)) return false;
-        Vector dirVec = VectorUtil.calculateVectorBetweenPoints(object.getCenter(),getCenter()).getUnitVector();
-        Vector dirCornerVec = VectorUtil.calculateVectorBetweenPoints(getPos(),getCenter()).getUnitVector();
-        Angle cornerAngle = new Angle(Math.atan2(-dirCornerVec.getY(),dirCornerVec.getX()));
-        Angle posAngle = new Angle(Math.atan2(-dirVec.getY(),dirVec.getX()));
-        return Math.abs(posAngle.getDegrees()) > cornerAngle.getDegrees();
-    }
-
-    public boolean isCollidingRight(PhysicsObjectUI object, double xSize, double ySize) {
-        if (!isObjectInCollisionBounds(object,xSize,ySize)) return false;
-        Vector dirVec = VectorUtil.calculateVectorBetweenPoints(object.getCenter(),getCenter()).getUnitVector();
-        Vector dirCornerVec = VectorUtil.calculateVectorBetweenPoints(getPos(),getCenter()).getUnitVector();
-        Angle cornerAngle = new Angle(Math.atan2(-dirCornerVec.getY(),dirCornerVec.getX()));
-        Angle posAngle = new Angle(Math.atan2(-dirVec.getY(),dirVec.getX()));
-        return Math.abs(posAngle.getDegrees()) < 180 - cornerAngle.getDegrees();
-    }
-
-    public boolean isObjectInCollisionBounds(PhysicsObjectUI object, double xSize, double ySize) {
-        boolean isXColliding = (object.getPos().getX() + xSize >= getPos().getX() && object.getPos().getX() <= getPos().getX() + getSize().getX());
-        boolean isYColliding = (object.getPos().getY() + ySize >= getPos().getY() && object.getPos().getY() <= getPos().getY() + getSize().getY());
-        return isXColliding && isYColliding;
-    }
-
 
     public PhysicsSurfaceUI setStaticFriction(double staticFriction) {
         this.staticFriction = staticFriction;

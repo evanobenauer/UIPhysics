@@ -14,6 +14,10 @@ public class VectorUtil {
         return point1.getSubtracted(point2);
     }
 
+    public static Vector calculateVectorBetweenObjectAndPoint(PhysicsObjectUI object, Vector point) {
+        return object.getCenter().getSubtracted(point);
+    }
+
     /**
      * Since the Y direction is flipped on windows, this special method returns the logical vector with a flipped y direction
      * @param vector

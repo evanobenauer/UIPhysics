@@ -57,10 +57,11 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         this.alpha = 0;
         this.netTorque = netTorque;
 
-        this.tickNetReset = false;
-
         this.deltaT = .1f;
+
+        this.tickNetReset = false;
         this.physicsDisabled = false;
+
         this.debugVectorForceScale = 1;
         this.debugVectorCap = 100;
     }
@@ -151,33 +152,54 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         setOmega(0);
     }
 
-    //TODO: Add collisions with shapes and lines here
-    // Rectangle code here is temporary and should be replaced with a universal shape collision detection
-    public boolean isColliding(LineUI line) {
-        return false;
-    }
-
     public boolean isColliding(IShape shape) {
-        if (getShape() instanceof RectangleUI rect && shape instanceof RectangleUI shapeRect) {
-            boolean isXColliding = (shape.getPos().getX() + shapeRect.getSize().getX() >= getPos().getX() && shape.getPos().getX() <= getPos().getX() + rect.getSize().getX());
-            boolean isYColliding = (shape.getPos().getY() + shapeRect.getSize().getY() >= getPos().getY() && shape.getPos().getY() <= getPos().getY() + rect.getSize().getY());
+        if (getShape() instanceof RectangleUI rectangle && shape instanceof RectangleUI shapeRect) {
+            boolean isXColliding = (shape.getPos().getX() + shapeRect.getSize().getX() >= getPos().getX() && shape.getPos().getX() <= getPos().getX() + rectangle.getSize().getX());
+            boolean isYColliding = (shape.getPos().getY() + shapeRect.getSize().getY() >= getPos().getY() && shape.getPos().getY() <= getPos().getY() + rectangle.getSize().getY());
             return isXColliding && isYColliding;
         }
+
+        //TODO: These don't work perfectly....
+        if (getShape() instanceof CircleUI circle && shape instanceof PolygonUI polygon) {
+            for (Vector vertex: polygon.getVertices()) {
+                if (vertex.getAdded(polygon.getPos()).getSubtracted(circle.getCenter()).getMagnitude() < circle.getRadius())
+                    return true;
+            }
+        }
+
+        if (getShape() instanceof PolygonUI polygon && shape instanceof CircleUI circle) {
+            for (Vector vertex: polygon.getVertices()) {
+                if (vertex.getAdded(polygon.getPos()).getSubtracted(circle.getCenter()).getMagnitude() < circle.getRadius())
+                    return true;
+            }
+        }
+
+        if (getShape() instanceof LineUI && shape instanceof CircleUI circle) {
+
+        }
+
+        if (getShape() instanceof CircleUI && shape instanceof CircleUI circle) {
+
+        }
+        //TODO: Use SAT detection
+        if (getShape() instanceof PolygonUI polygon && shape instanceof PolygonUI otherPolygon) {
+        }
+
         return false;
     }
 
     public boolean isColliding(PhysicsObjectUI object) {
-        if (getShape() instanceof RectangleUI rect && object.getShape() instanceof RectangleUI objRect) {
-            boolean isXColliding = (object.getPos().getX() + objRect.getSize().getX() >= getPos().getX() && object.getPos().getX() <= getPos().getX() + rect.getSize().getX());
-            boolean isYColliding = (object.getPos().getY() + objRect.getSize().getY() >= getPos().getY() && object.getPos().getY() <= getPos().getY() + rect.getSize().getY());
-            return isXColliding && isYColliding;
-        }
-        return false;
+        return isColliding(object.getShape());
     }
 
-    public boolean isColliding(PhysicsSurfaceUI surface) {
-        if (getShape() instanceof RectangleUI rect) return surface.isObjectInCollisionBounds(this,rect.getSize().getX(),rect.getSize().getY());
-        return false;
+    //Combines the colliding objects into 1 new object
+    public void doInelasticCollision() {
+
+    }
+
+    //Keeps separate objects with pushback collision code
+    public void doElasticCollision() {
+
     }
 
 
