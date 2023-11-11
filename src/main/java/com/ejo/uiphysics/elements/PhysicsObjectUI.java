@@ -85,6 +85,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         shape.draw(scene, mousePos);
         if (scene.getWindow().isDebug()) {
             if (isPhysicsDisabled()) return;
+            if (getNetForce() == null || prevNetForce == null || getVelocity() == null) return;
             //Force
             Vector netForce = doTickNetReset() ? prevNetForce : getNetForce();
             if (netForce.getMagnitude() != 0) {
