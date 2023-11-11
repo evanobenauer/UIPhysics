@@ -8,6 +8,8 @@ import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.misc.ColorE;
 import com.ejo.uiphysics.util.VectorUtil;
 
+import java.util.ArrayList;
+
 /**
  * The PhysicsObject class is a container for any shape. The class uses the data from the shape and calculates kinematics to move
  * said shape anywhere on the screen.
@@ -161,7 +163,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
     public void doElasticCollision() {
 
     }
-    
+
     public boolean isColliding(IShape shape) {
         //COMPLETE
         if (getShape() instanceof RectangleUI rectangle && shape instanceof RectangleUI shapeRect) {
@@ -182,6 +184,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
                 if (vertex.getAdded(polygon.getPos()).getSubtracted(circle.getCenter()).getMagnitude() < circle.getRadius())
                     return true;
             }
+            return false;
         }
 
         //INCOMPLETE
@@ -190,6 +193,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
                 if (vertex.getAdded(polygon.getPos()).getSubtracted(circle.getCenter()).getMagnitude() < circle.getRadius())
                     return true;
             }
+            return false;
         }
 
         //INCOMPLETE
@@ -197,9 +201,68 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
 
         }
 
-        //TODO: Use SAT detection
-        //INCOMPLETE
+        //COMPLETE - Separating Axis Theorem
         if (getShape() instanceof PolygonUI polygon && shape instanceof PolygonUI otherPolygon) {
+            ArrayList<Vector> axisList = new ArrayList<>();
+
+            //Polygon 1 Axes
+            for (int i = 0; i < polygon.getVertices().length; i++) {
+                Vector vertex = polygon.getVertices()[i];
+                Vector vertex2 = polygon.getVertices()[i + 1 >= polygon.getVertices().length ? 0 : i + 1];
+                Vector sideVector = vertex2.getSubtracted(vertex);
+                Vector perpendicular = sideVector.getCross(new Vector(0, 0, 1));
+                Vector axis = perpendicular.getUnitVector();
+                axisList.add(axis);
+            }
+
+            //Polygon 2 Axes
+            for (int i = 0; i < otherPolygon.getVertices().length; i++) {
+                Vector vertex = otherPolygon.getVertices()[i];
+                Vector vertex2 = otherPolygon.getVertices()[i + 1 >= otherPolygon.getVertices().length ? 0 : i + 1];
+                Vector sideVector = vertex2.getSubtracted(vertex);
+                Vector perpendicular = sideVector.getCross(new Vector(0, 0, 1));
+                Vector axis = perpendicular.getUnitVector();
+                axisList.add(axis);
+            }
+
+            for (Vector axis : axisList) {
+                double polygon1Max = 0;
+                double polygon1Min = 0;
+
+                double polygon2Max = 0;
+                double polygon2Min = 0;
+
+                for (int i = 0; i < polygon.getVertices().length; i++) {
+                    Vector vertex = polygon.getVertices()[i].getAdded(polygon.getPos());
+                    double axisComponent = axis.getDot(vertex);
+                    if (i == 0) {
+                        polygon1Min = axisComponent;
+                        polygon1Max = axisComponent;
+                    }
+                    if (axisComponent > polygon1Max) polygon1Max = axisComponent;
+                    if (axisComponent < polygon1Min) polygon1Min = axisComponent;
+                }
+
+                for (int i = 0; i < otherPolygon.getVertices().length; i++) {
+                    Vector vertex = otherPolygon.getVertices()[i].getAdded(otherPolygon.getPos());
+                    double axisComponent = axis.getDot(vertex);
+                    if (i == 0) {
+                        polygon2Min = axisComponent;
+                        polygon2Max = axisComponent;
+                    }
+                    if (axisComponent > polygon2Max) polygon2Max = axisComponent;
+                    if (axisComponent < polygon2Min) polygon2Min = axisComponent;
+                }
+
+                if ((polygon1Max < polygon2Max && polygon1Max > polygon2Min) || polygon1Min < polygon2Max && polygon1Min > polygon2Min) {
+                    continue;
+                } else {
+                    return false;
+                }
+
+            }
+            return true;
+
         }
 
         return false;
