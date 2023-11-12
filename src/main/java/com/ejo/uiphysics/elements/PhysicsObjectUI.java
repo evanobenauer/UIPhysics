@@ -179,28 +179,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
             return objectDistance <= circle.getRadius() + otherCircle.getRadius();
         }
 
-        //INCOMPLETE
-        if (getShape() instanceof CircleUI circle && shape instanceof PolygonUI polygon) {
-            for (Vector vertex: polygon.getVertices()) {
-                if (vertex.getAdded(polygon.getPos()).getSubtracted(circle.getCenter()).getMagnitude() < circle.getRadius())
-                    return true;
-            }
-            return false;
-        }
-
-        //INCOMPLETE
-        if (getShape() instanceof PolygonUI polygon && shape instanceof CircleUI circle) {
-            for (Vector vertex: polygon.getVertices()) {
-                if (vertex.getAdded(polygon.getPos()).getSubtracted(circle.getCenter()).getMagnitude() < circle.getRadius())
-                    return true;
-            }
-            return false;
-        }
-
-        //INCOMPLETE
-        if (getShape() instanceof LineUI && shape instanceof CircleUI circle) {
-
-        }
+        //TODO: WIP Collisions List: Circle/Polygon, Circle/Line, Polygon/Line
 
         //COMPLETE - Separating Axis Theorem
         if (getShape() instanceof PolygonUI polygon && shape instanceof PolygonUI otherPolygon) {
@@ -223,7 +202,14 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
                 Vector sideVector = vertex2.getSubtracted(vertex);
                 Vector perpendicular = sideVector.getCross(new Vector(0, 0, 1));
                 Vector axis = perpendicular.getUnitVector();
-                axisList.add(axis);
+                boolean isDuplicate = false;
+                for (Vector currentAxis : axisList) {
+                    if (axis.equals(currentAxis)) {
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+                if (!isDuplicate) axisList.add(axis);
             }
 
             for (Vector axis : axisList) {
