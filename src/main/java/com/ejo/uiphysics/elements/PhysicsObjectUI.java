@@ -6,6 +6,7 @@ import com.ejo.glowui.scene.elements.ElementUI;
 import com.ejo.glowui.scene.elements.shape.*;
 import com.ejo.glowlib.math.Vector;
 import com.ejo.glowlib.misc.ColorE;
+import com.ejo.uiphysics.util.CollisionUtil;
 import com.ejo.uiphysics.util.VectorUtil;
 
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         this.acceleration = Vector.NULL;
         this.netForce = netForce;
 
-        this.spin = 0;
+        this.spin = 0; //This is in radians
         this.omega = omega;
         this.alpha = 0;
         this.netTorque = netTorque;
@@ -155,102 +156,36 @@ public class PhysicsObjectUI extends ElementUI implements IShape {
         setOmega(0);
     }
 
-    //Combines the colliding objects into 1 new object
-    public void doInelasticCollision() {
-
-    }
-
-    //Keeps separate objects with pushback collision code
-    public void doElasticCollision() {
-
-    }
-
     public boolean isColliding(IShape shape) {
-        //COMPLETE
         if (getShape() instanceof RectangleUI rectangle && shape instanceof RectangleUI shapeRect) {
             boolean isXColliding = (shape.getPos().getX() + shapeRect.getSize().getX() >= getPos().getX() && shape.getPos().getX() <= getPos().getX() + rectangle.getSize().getX());
             boolean isYColliding = (shape.getPos().getY() + shapeRect.getSize().getY() >= getPos().getY() && shape.getPos().getY() <= getPos().getY() + rectangle.getSize().getY());
             return isXColliding && isYColliding;
         }
 
-        //COMPLETE
         if (getShape() instanceof CircleUI circle && shape instanceof CircleUI otherCircle) {
             double objectDistance = circle.getCenter().getSubtracted(otherCircle.getCenter()).getMagnitude();
             return objectDistance <= circle.getRadius() + otherCircle.getRadius();
         }
 
-        //TODO: WIP Collisions List: Circle/Polygon, Circle/Line, Polygon/Line
+        //TODO: WIP Collisions List: Circle/Line
+        if (getShape() instanceof CircleUI circle && shape instanceof LineUI line)
+            return CollisionUtil.isCollidingSAT(circle,line);
+        if (getShape() instanceof LineUI line && shape instanceof CircleUI circle)
+            return CollisionUtil.isCollidingSAT(circle,line);
 
-        //COMPLETE - Separating Axis Theorem
-        if (getShape() instanceof PolygonUI polygon && shape instanceof PolygonUI otherPolygon) {
-            ArrayList<Vector> axisList = new ArrayList<>();
+        if (getShape() instanceof PolygonUI polygon && shape instanceof LineUI line)
+            return CollisionUtil.isCollidingSAT(polygon,line);
+        if (getShape() instanceof LineUI line && shape instanceof PolygonUI polygon)
+            return CollisionUtil.isCollidingSAT(polygon,line);
 
-            //Polygon 1 Axes
-            for (int i = 0; i < polygon.getVertices().length; i++) {
-                Vector vertex = polygon.getVertices()[i];
-                Vector vertex2 = polygon.getVertices()[i + 1 >= polygon.getVertices().length ? 0 : i + 1];
-                Vector sideVector = vertex2.getSubtracted(vertex);
-                Vector perpendicular = sideVector.getCross(new Vector(0, 0, 1));
-                Vector axis = perpendicular.getUnitVector();
-                axisList.add(axis);
-            }
+        if (getShape() instanceof PolygonUI polygon && shape instanceof CircleUI circle)
+            return CollisionUtil.isCollidingSAT(polygon,circle);
+        if (getShape() instanceof CircleUI circle && shape instanceof PolygonUI polygon)
+            return CollisionUtil.isCollidingSAT(polygon,circle);
 
-            //Polygon 2 Axes
-            for (int i = 0; i < otherPolygon.getVertices().length; i++) {
-                Vector vertex = otherPolygon.getVertices()[i];
-                Vector vertex2 = otherPolygon.getVertices()[i + 1 >= otherPolygon.getVertices().length ? 0 : i + 1];
-                Vector sideVector = vertex2.getSubtracted(vertex);
-                Vector perpendicular = sideVector.getCross(new Vector(0, 0, 1));
-                Vector axis = perpendicular.getUnitVector();
-                boolean isDuplicate = false;
-                for (Vector currentAxis : axisList) {
-                    if (axis.equals(currentAxis)) {
-                        isDuplicate = true;
-                        break;
-                    }
-                }
-                if (!isDuplicate) axisList.add(axis);
-            }
-
-            for (Vector axis : axisList) {
-                double polygon1Max = 0;
-                double polygon1Min = 0;
-
-                double polygon2Max = 0;
-                double polygon2Min = 0;
-
-                for (int i = 0; i < polygon.getVertices().length; i++) {
-                    Vector vertex = polygon.getVertices()[i].getAdded(polygon.getPos());
-                    double axisComponent = axis.getDot(vertex);
-                    if (i == 0) {
-                        polygon1Min = axisComponent;
-                        polygon1Max = axisComponent;
-                    }
-                    if (axisComponent > polygon1Max) polygon1Max = axisComponent;
-                    if (axisComponent < polygon1Min) polygon1Min = axisComponent;
-                }
-
-                for (int i = 0; i < otherPolygon.getVertices().length; i++) {
-                    Vector vertex = otherPolygon.getVertices()[i].getAdded(otherPolygon.getPos());
-                    double axisComponent = axis.getDot(vertex);
-                    if (i == 0) {
-                        polygon2Min = axisComponent;
-                        polygon2Max = axisComponent;
-                    }
-                    if (axisComponent > polygon2Max) polygon2Max = axisComponent;
-                    if (axisComponent < polygon2Min) polygon2Min = axisComponent;
-                }
-
-                if ((polygon1Max < polygon2Max && polygon1Max > polygon2Min) || polygon1Min < polygon2Max && polygon1Min > polygon2Min) {
-                    continue;
-                } else {
-                    return false;
-                }
-
-            }
-            return true;
-
-        }
+        if (getShape() instanceof PolygonUI polygon && shape instanceof PolygonUI otherPolygon)
+            return CollisionUtil.isCollidingSAT(polygon,otherPolygon);
 
         return false;
     }
