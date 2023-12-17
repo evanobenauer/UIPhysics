@@ -11,9 +11,12 @@ import com.ejo.uiphysics.util.VectorUtil;
 import java.util.ArrayList;
 
 /**
- * This is an unfinished, EXPERIMENTAL feature. There may be bugs, slow loading times, and more. Use at your own risk
+ * PhysicsSurfaceUI is a collision-based rectangular surface that PhysicsObjects may interact with.
+ * The surface is IMMOVABLE by other objects. Pushing Forces, Friction Forces, and more will not be applied
  */
 public class PhysicsSurfaceUI extends PhysicsObjectUI {
+
+    private final boolean equalAndOppositeExperimental = false;
 
     private ArrayList<PhysicsObjectUI> physicsObjects = new ArrayList<>();
 
@@ -21,9 +24,10 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
     private double kineticFriction;
 
     public PhysicsSurfaceUI(RectangleUI rectangle, double staticFriction, double kineticFriction) {
-        super(rectangle, 1, 0, Vector.NULL, Vector.NULL);
+        super(rectangle, 1000, 0, Vector.NULL, Vector.NULL);
         this.staticFriction = staticFriction;
         this.kineticFriction = kineticFriction;
+        if (equalAndOppositeExperimental) setTickNetReset(true);
     }
 
     @Override
@@ -89,6 +93,7 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
         if (parallelVelocityComponent == 0 && parallelForceComponent > 0) kineticForce *= -1;
         object.addForce(platformAngle.getUnitVector().getMultiplied(kineticForce));
 
+        if (equalAndOppositeExperimental) addForce(platformAngle.getUnitVector().getMultiplied(kineticForce).getMultiplied(-1)); //Adds and equal/opposite force
 
         // -----------------------------------------------------------------------------------------------
         //NOTE: Friction balancing forces will sometimes cause an oscillation around 0 due to deltaT not being infinitely small.
@@ -105,25 +110,37 @@ public class PhysicsSurfaceUI extends PhysicsObjectUI {
     }
 
     private void doCollisionTop(PhysicsObjectUI object, double ySize) {
-        if (object.getNetForce().getY() > 0) object.addForce(new Vector(0,-object.getNetForce().getY()));
+        if (object.getNetForce().getY() > 0) {
+            if (equalAndOppositeExperimental) addForce(new Vector(0,object.getNetForce().getY()));
+            object.addForce(new Vector(0,-object.getNetForce().getY()));
+        }
         object.setVelocity(new Vector(object.getVelocity().getX(),object.getVelocity().getY() > 0 ? getVelocity().getY() : object.getVelocity().getY()));
         object.setPos(new Vector(object.getPos().getX(),getPos().getY() - ySize));
     }
 
     private void doCollisionBottom(PhysicsObjectUI object, double ySize) {
-        if (object.getNetForce().getY() < 0) object.addForce(new Vector(0,-object.getNetForce().getY()));
+        if (object.getNetForce().getY() < 0) {
+            if (equalAndOppositeExperimental) addForce(new Vector(0,object.getNetForce().getY()));
+            object.addForce(new Vector(0,-object.getNetForce().getY()));
+        }
         object.setVelocity(new Vector(object.getVelocity().getX(),object.getVelocity().getY() < 0 ? getVelocity().getY() : object.getVelocity().getY()));
         object.setPos(new Vector(object.getPos().getX(),getPos().getY() + getSize().getY()));
     }
 
     private void doCollisionLeft(PhysicsObjectUI object, double xSize) {
-        if (object.getNetForce().getX() > 0) object.addForce(new Vector(-object.getNetForce().getX(),0));
+        if (object.getNetForce().getX() > 0) {
+            if (equalAndOppositeExperimental) addForce(new Vector(object.getNetForce().getX(),0));
+            object.addForce(new Vector(-object.getNetForce().getX(),0));
+        }
         object.setVelocity(new Vector(object.getVelocity().getX() > 0 ? getVelocity().getX() : object.getVelocity().getX(),object.getVelocity().getY()));
         object.setPos(new Vector(getPos().getX() - xSize,object.getPos().getY()));
     }
 
     private void doCollisionRight(PhysicsObjectUI object, double xSize) {
-        if (object.getNetForce().getX() < 0) object.addForce(new Vector(-object.getNetForce().getX(),0));
+        if (object.getNetForce().getX() < 0) {
+            if (equalAndOppositeExperimental) addForce(new Vector(object.getNetForce().getX(),0));
+            object.addForce(new Vector(-object.getNetForce().getX(),0));
+        }
         object.setVelocity(new Vector(object.getVelocity().getX() < 0 ? getVelocity().getX() : object.getVelocity().getX(),object.getVelocity().getY()));
         object.setPos(new Vector(getPos().getX() + getSize().getX(),object.getPos().getY()));
     }
